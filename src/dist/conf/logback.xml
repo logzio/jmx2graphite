@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- For assistance related to logback-translator or configuration  -->
+<!-- files in general, please contact the logback user mailing list -->
+<!-- at http://www.qos.ch/mailman/listinfo/logback-user             -->
+<!--                                                                -->
+<!-- For professional support please see                            -->
+<!--    http://www.qos.ch/shop/products/professionalSupport         -->
+<!--                                                                -->
+<configuration>
+    <appender name="default.console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yy/MM/dd HH:mm:ss} %p %c{2}: %m%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+
+    <appender name="default.file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <append>true</append>
+        <file>/var/log/jmx2graphite/jmx2graphite.log</file>
+        <encoder>
+            <pattern>%d{yy/MM/dd HH:mm:ss} %p %c{2}: %m%n</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>/var/log/jmx2graphite/jmx2graphite.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <!-- keep 3 days' worth of history -->
+            <maxHistory>1</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <logger name="io.logz.jmx2graphite" level="INFO"/>
+    <logger name="org.quartz" level="WARN"/>
+
+    <root level="INFO">
+        <appender-ref ref="default.console"/>
+        <appender-ref ref="default.file" />
+    </root>
+</configuration>

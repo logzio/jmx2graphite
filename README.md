@@ -1,2 +1,181 @@
 # jmx2graphite
-JMX to graphite 1-liner poller
+
+jmx2graphite is a one liner tool for polling JXM and writes into Graphite (every 30 seconds by default). You install & run it on every machine you want to poll its JMX.
+
+Currently it only reads JMX from a jolokia agent running on a JVM, since exposing JMX is the simplest and easiest through Jolokia agent (1 liner - see below).
+
+The reporting to graphite is done through the Pickle protocol, hence by default port 2004, since it's more efficient.
+
+The metrics reported have the following names template:
+
+[service-name].[service-host].[metric-name]
+
+- service-name is a parameter you supply when you run jmx2graphite. For example "LogReceiever", or "FooBackend"
+- service-host is a parameter you supply when you run jmx2graphite. If not supplied it's the hostname of the 
+  jolokia URL. For example: "172_1_1_2" or "log-receiver-1_foo_com"
+- metric-name the name of the metric taken when polling Jolokia. For example: java_lang.type_Memory.HeapMemoryUsage.used
+
+# How to run?
+
+If you don't have docker, install it first - instructions [here](http://docs.docker.com/engine/installation/).
+
+```bash
+docker run -i -t -d --name jmx2graphite \
+   -e "JOLOKIA_URL=http://172.1.1.2:11001/jolokia/" \
+   -e "SERVICE_NAME=MyApp" \
+   -e "GRAPHITE_HOST=graphite.foo.com" \
+   -v /var/log/jmx2graphite:/var/log/jmx2graphite \
+   --rm=true
+   logzio/jmx2graphite
+```
+
+*Environment variables*
+- JOLOKIA_URL: The full URL to jolokia on the JVM you want to sample
+- SERVICE_NAME: The name of thes service (it's role).
+- GRAPHITE_HOST: The hostname/IP of graphite
+
+*Rest of command*
+- ` -v /var/log/jmx2graphite:/var/log/jmx2graphite`: jmx2graphite by defaults writes its log (using Logback) to `/var/log/jmx2graphite`. This argument maps this directory to the host directory so you can easily view the logs from the place you run the docker command
+- `--rm=true`: removes the docker image created upon using `docker run` command, so you can just call `docker run` command again.
+
+
+## Optional environment variables
+
+- GRAPHITE_PORT: Pickle protocol port of graphite. Defaults to 2004.
+- SERVICE_HOST: By default the host is taken from Jolokia URL and serves as the service host, unless you use this variable.
+- INTERVAL_IN_SEC: By default 30 seconds unless you use this variable.
+
+# How to expose JMX Metrics using Jolokia Agent
+
+1. Download Jolokia JVM Agent JAR file [here](http://search.maven.org/remotecontent?filepath=org/jolokia/jolokia-jvm/1.3.2/jolokia-jvm-1.3.2-agent.jar).
+2. Add the following command line option to your line running java:
+ ```
+ -javaagent:path-to-jolokia-jar-file.jar
+ ```
+ For example:
+ ```
+ -javaagent:/opt/jolokia/jolokia-jvm-1.3.2-agent.jar
+ ```
+
+By default it exposes an HTTP REST interface on port 8778. See [here](https://jolokia.org/reference/html/agents.html#jvm-agent) if you want to change it and configure it more.
+We run all of ours apps using Docker, so to avoid clashes when we map the 8778 port to a unique external port belonging only to this application. 
+
+
+# Installing and Configuring Graphite
+If you never installed Graphite, this small guide below might be a good place to start. I'm using Docker since it's very easy to install this way.
+
+## Installing Graphite
+We will install Graphite using a great docker image by [hopsoft](https://github.com/hopsoft/docker-graphite-statsd). I tried several and it was by far the easiest to work with.
+
+1. Run the following to get basic Graphite up and running
+```
+docker run -d \
+  --name graphite \
+  --restart=always \
+  -p 80:80 \
+  -p 2003:2003 \
+  -p 2004:2004 \
+  -p 8125:8125/udp \
+  -p 8126:8126 \
+```
+2. Now, let's copy out all of its existing configuration files so it will be easy to modify. I will assume you will place it at `/home/ubuntu`
+```
+cd /home/ubuntu
+mkdir graphite
+docker cp graphite:/opt/graphite/conf graphite
+docker cp graphite:/opt/graphite/webapp/graphite graphite/webapp
+```
+
+3. Stop graphite by running `docker stop graphite`
+4. Configuring Graphite: Now edit the following files:
+  1. `/home/ubuntu/graphite/conf/carbon.conf`:
+     - MAX_CREATES_PER_MINUTE: Make sure to place high values - for example 10000. The default of 50 means that
+        the first time you run jmx2graphite, all of your metrics are reported at once. If you have more than 50, all 
+        other metrics will be dropped.
+     - MAX_UPDATES_PER_SECOND: I read a lot there should be a formula for calcualting the value for this field, but
+        that is once you reach high I/O disk utilization. For now, simply place 10000 value there. Otherwise you will
+        get a 1-2 minute lag from the moment jmx2graphite pushes the metric to Graphite until it is viewable in 
+        Graphite dashboard
+  2. `/home/ubuntu/graphite/conf/storage-schemas.conf`:
+      - in the default section (default_1min_for_1day) make sure retentions is set to the same interval as you are using
+      in jmx2graphite (30seconds by default). Here is an example
+      ```
+      [default_1min_for_1day]
+      pattern = .*
+      retentions = 30s:24h,1min:7d,10min:1800d
+      ```
+      If you have 10s:24h then when doing derivative, you will get null values for each missing 2 points in the 30sec window
+      and the graph will be empty
+
+5. Create some directories which normally are crearted by the docker image but since we're mounting `/var/log` to an empty directory of ours in the host, they don't exists:
+```bash
+mkdir -p /home/ubuntu/log/nginx
+mkdir -p /home/ubuntu/log/carbon
+mkdir -p /home/ubuntu/log/graphite
+```
+
+6. Run Graphite. I use the following short bash script `run-graphite.sh`:
+```bash
+#!/bin/bash
+ docker run -d \
+  --name graphite \
+  --restart=always \
+  -p 80:80 \
+  -p 2003:2003 \
+  -p 2004:2004 \
+  -p 8125:8125/udp \
+  -p 8126:8126 \
+  -v /home/ubuntu/graphite/storage:/opt/graphite/storage \
+  -v /home/ubuntu/log:/var/log \
+  -v /home/ubuntu/graphite/conf:/opt/graphite/conf \
+  -v /home/ubuntu/graphite/webapp/graphite:/opt/graphite/webapp/graphite \
+  hopsoft/graphite-statsd
+```
+
+## Configuring Graphite
+
+If you have an existing Graphite installation see the section above "configuring Graphite: Now edit the following files:".
+
+# Motivation
+
+I was looking for a tool I can just drop in place, have a 1-liner run command which will then run every 10 seconds, poll my JVM JMX entirely and dump it to Graphite.
+Of course I started Googling and saw the following:
+
+- [JMXTrans](https://github.com/jmxtrans/jmxtrans)
+   I had several issues which got me stomped: 
+     - You can instruct it to sample all JMX metrics. Instead you have to specify exactly which MBeans which you want and also their attributes - this can be quite a long list. In order to compose this list you have to fire up JMX Console, find the bean you are interested at, extract its name and add several lines of config to your config file. Then you have to copy the attribute names you want from this mbean. Rinse and repeat for every bean. For me, I just wanted all, since when you benchmark a JVM you don't know where the problem is so you want to start with everything at hand. From my handful experience with JMX, polling all beans doesn't impact the running JVM. Graphite can be boasted with hardware if it will become the bottleneck. Essentially I would like to add blacklist/whitelist to jmx2graphite, but it should be straightforward wildcard expession and not regular expression based.
+     - I had trouble understanding how to configure it polling several JVMs. It invovles writing a YAML file and then running a CLI for generating the configuration file for JMXTrans. Too complicated in my opinion. 
+- [jmxproxy](https://github.com/mk23/jmxproxy)
+   It's an HTTP REST server allowing you to fetch mbeans from a given JVM using REST to it. You are supposed to have one per your cluster. Great work there. The biggest drawback here was that you have to specify a predefined list of mbeans to retrieve - I wanted it all - it's too much work to compose the list of mbeans for: Camel, Kafka, Zookeeper, your own, etc.
+  
+- [Sensu plugin](https://github.com/sensu/sensu-community-plugins/blob/master/plugins/http/http-json-graphite.rb) - Aside from the prequisite of Sensu, again you must supply a predefined list of beans. 
+
+- [Collectd plugin](https://collectd.org/wiki/index.php/Plugin:GenericJMX) - Must have collectd and also, same as before, specify a list of mbeans and their attributes in a quite complicated config file. This also requires installing another collectd plugin.
+
+- [Fluentd JMX plugin](https://github.com/niyonmaruz/fluent-plugin-jmx) - Must have fluentd installed. Must specify list of mbeans and their attributes. Works against Jolokia only (same as jmx2graphite)
+
+   
+So after spending roughly 1.5 days fighting with those tools and not getting what I wanted, I sat down to write my own.
+
+## Why Docker?
+Docker enables jmx2graphite to install and run in one command line! Just about any other solution will requires more steps for installation, and not to mention the development efforts.
+
+## Why Jolokia?
+- When running JVM application inside docker it is sometime quite complex getting JMX to work, especially around ports.
+- Composing JMX URI seems very complicated and not intuitive. Jolokia REST endpoint is straight forward.
+- Can catch reading several MBeans into one call (not using this feature yet though)
+
+# Features Roadmap
+
+- Add tests
+- Add support for reading using JMX RMI protocol for those not using Jolokia.
+- Support whiltelisting/blacklisting for metrics
+
+# Contributing 
+
+## Building and Deploying
+TBD
+
+#License
+
+See the LICENSE file for license rights and limitations (MIT).
