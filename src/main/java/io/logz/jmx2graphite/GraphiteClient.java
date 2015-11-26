@@ -38,12 +38,12 @@ public class GraphiteClient implements Closeable {
         }
 
         logger.info("Graphite metrics prefix: "+metricsPrefix);
+        logger.info("Graphite Client: using writeTimeoutMs of {} [ms]. Establishing connection..." ,writeTimeoutMs);
 
         SocketFactory socketFactory = new SocketFactoryWithTimeouts(connectTimeout, socketTimeout);
         graphite = new PickledGraphite(new InetSocketAddress(graphiteHostname, graphitePort),
                 socketFactory, /*batchSize */ 400, writeTimeoutMs);
 
-        logger.info("Graphite Client: writeTimeoutMs = {} [ms]" ,writeTimeoutMs);
     }
 
     public static String sanitizeMetricName(String s) {

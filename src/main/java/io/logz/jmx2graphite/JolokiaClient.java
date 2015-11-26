@@ -3,7 +3,6 @@ package io.logz.jmx2graphite;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.http.HttpResponse;
@@ -44,7 +43,7 @@ public class JolokiaClient {
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
-    public List<MetricBean> getBeans() {
+    public List<MetricBean> getBeans() throws JolokiaClientPollingFailure {
         try {
             stopwatch.reset().start();
             HttpResponse httpResponse = Get(new URI(jolokiaFullURL + "list"))
@@ -63,7 +62,7 @@ public class JolokiaClient {
             }
             return extractMetricsBeans(domains);
         } catch (URISyntaxException  | IOException e) {
-            throw Throwables.propagate(e);
+            throw new JolokiaClientPollingFailure("Failed retrieving list of beans from Jolokia. Error = "+e.getMessage(), e);
         }
     }
 
@@ -83,7 +82,7 @@ public class JolokiaClient {
         return result;
     }
 
-    public List<MetricValue> getMetrics(List<MetricBean> beans) {
+    public List<MetricValue> getMetrics(List<MetricBean> beans) throws JolokiaClientPollingFailure {
         List<JolokiaReadRequest> readRequests = Lists.newArrayList();
         for (MetricBean bean : beans) {
             readRequests.add(new JolokiaReadRequest(bean.getName(), bean.getAttributes()));
@@ -135,7 +134,7 @@ public class JolokiaClient {
             }
             return metricValues;
         } catch (IOException e) {
-            throw new RuntimeException("Failed reading beans. Error = "+e.getMessage(), e);
+            throw new JolokiaClientPollingFailure("Failed reading beans from Jolokia. Error = "+e.getMessage(), e);
         }
     }
 
@@ -162,4 +161,10 @@ public class JolokiaClient {
     }
 
 
+    public static class JolokiaClientPollingFailure extends RuntimeException {
+
+        public JolokiaClientPollingFailure(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 }

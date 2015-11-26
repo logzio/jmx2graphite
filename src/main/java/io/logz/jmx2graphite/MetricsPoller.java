@@ -77,9 +77,16 @@ public class MetricsPoller implements Job {
                     sw.stop().elapsed(TimeUnit.MILLISECONDS),
                     graphiteClient.getFailedAtLastWrite());
         } catch (GraphiteClient.GraphiteWriteFailed e) {
-            logger.warn("Failed writing to Graphite: "+e.getMessage());
             if (logger.isDebugEnabled()) {
                 logger.debug("Failed writing to Graphite: "+e.getMessage(), e);
+            } else {
+                logger.warn("Failed writing to Graphite: "+e.getMessage());
+            }
+        } catch (JolokiaClient.JolokiaClientPollingFailure e) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Failed polling metrics from Jolokia: " + e.getMessage(), e);
+            } else {
+                logger.warn("Failed polling metrics from Jolokia: " + e.getMessage());
             }
         }
     }

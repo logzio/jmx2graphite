@@ -37,7 +37,7 @@
     <logger name="io.logz.jmx2graphite" level="INFO"/>
     <logger name="org.quartz" level="WARN"/>
 
-    <root level="INFO">
+    <root level="${LOG_LEVEL:-info}">
         <appender-ref ref="default.console"/>
         <appender-ref ref="default.file" />
     </root>

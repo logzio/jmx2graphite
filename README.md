@@ -68,25 +68,25 @@ If you never installed Graphite, this small guide below might be a good place to
 We will install Graphite using a great docker image by [hopsoft](https://github.com/hopsoft/docker-graphite-statsd). I tried several and it was by far the easiest to work with.
 
 1. Run the following to get basic Graphite up and running
-```
-docker run -d \
-  --name graphite \
-  --restart=always \
-  -p 80:80 \
-  -p 2003:2003 \
-  -p 2004:2004 \
-  -p 8125:8125/udp \
-  -p 8126:8126 \
-```
+    ```
+    docker run -d \
+      --name graphite \
+      -p 80:80 \
+      -p 2003:2003 \
+      -p 2004:2004 \
+      -p 8125:8125/udp \
+      -p 8126:8126 
+    ```
 2. Now, let's copy out all of its existing configuration files so it will be easy to modify. I will assume you will place it at `/home/ubuntu`
-```
-cd /home/ubuntu
-mkdir graphite
-docker cp graphite:/opt/graphite/conf graphite
-docker cp graphite:/opt/graphite/webapp/graphite graphite/webapp
-```
+    ```
+    cd /home/ubuntu
+    mkdir graphite
+    docker cp graphite:/opt/graphite/conf graphite
+    docker cp graphite:/opt/graphite/webapp/graphite graphite/webapp
+    ```
 
 3. Stop graphite by running `docker stop graphite`
+
 4. Configuring Graphite: Now edit the following files:
   1. `/home/ubuntu/graphite/conf/carbon.conf`:
      - MAX_CREATES_PER_MINUTE: Make sure to place high values - for example 10000. The default of 50 means that
@@ -108,29 +108,30 @@ docker cp graphite:/opt/graphite/webapp/graphite graphite/webapp
       and the graph will be empty
 
 5. Create some directories which normally are crearted by the docker image but since we're mounting `/var/log` to an empty directory of ours in the host, they don't exists:
-```bash
-mkdir -p /home/ubuntu/log/nginx
-mkdir -p /home/ubuntu/log/carbon
-mkdir -p /home/ubuntu/log/graphite
-```
+    ```bash
+    mkdir -p /home/ubuntu/log/nginx
+    mkdir -p /home/ubuntu/log/carbon
+    mkdir -p /home/ubuntu/log/graphite
+    ```
 
 6. Run Graphite. I use the following short bash script `run-graphite.sh`:
-```bash
-#!/bin/bash
- docker run -d \
-  --name graphite \
-  --restart=always \
-  -p 80:80 \
-  -p 2003:2003 \
-  -p 2004:2004 \
-  -p 8125:8125/udp \
-  -p 8126:8126 \
-  -v /home/ubuntu/graphite/storage:/opt/graphite/storage \
-  -v /home/ubuntu/log:/var/log \
-  -v /home/ubuntu/graphite/conf:/opt/graphite/conf \
-  -v /home/ubuntu/graphite/webapp/graphite:/opt/graphite/webapp/graphite \
-  hopsoft/graphite-statsd
-```
+    ```bash
+    #!/bin/bash
+     docker run -d \
+      --name graphite \
+      --rm=true \
+      --restart=always \
+      -p 80:80 \
+      -p 2003:2003 \
+      -p 2004:2004 \
+      -p 8125:8125/udp \
+      -p 8126:8126 \
+      -v /home/ubuntu/graphite/storage:/opt/graphite/storage \
+      -v /home/ubuntu/log:/var/log \
+      -v /home/ubuntu/graphite/conf:/opt/graphite/conf \
+      -v /home/ubuntu/graphite/webapp/graphite:/opt/graphite/webapp/graphite \
+      hopsoft/graphite-statsd
+    ```
 
 ## Configuring Graphite
 
@@ -167,11 +168,15 @@ Docker enables jmx2graphite to install and run in one command line! Just about a
 
 # Features Roadmap
 
-- Add tests
+- Add Integration Tests using Vagrant
 - Add support for reading using JMX RMI protocol for those not using Jolokia.
 - Support whiltelisting/blacklisting for metrics
 
 # Contributing 
+
+We welcome any contribution! You can help in the following way:
+- Open an issue (Bug, Feature request, etc)
+- Pull requests for any addition you can think of
 
 ## Building and Deploying
 TBD
