@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -26,16 +27,19 @@ public class DummyGraphiteServer {
     private ServerSocket serverSocket;
 
     private CountDownLatch serverDownLatch;
+    private CountDownLatch serverUpLatch;
     public DummyGraphiteServer(int port) {
         this.port = port;
     }
 
-    public void start() throws Exception {
+    public void start() {
+        serverUpLatch = new CountDownLatch(1);
         serverThread = new Thread(() -> {
             PrintWriter out = null;
             BufferedReader in = null;
             try {
                 serverSocket = new ServerSocket(port);
+                serverUpLatch.countDown();
                 clientSocket = serverSocket.accept();
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -45,20 +49,33 @@ public class DummyGraphiteServer {
                 while ((inputLine = in.readLine()) != null) {
                     out.println(inputLine);
                 }
+            } catch (SocketException e) {
+                if (clientSocket.isClosed()) {
+                    logger.info("Client closed connection");
+                }
             } catch (IOException e) {
                 logger.info("Exception caught when trying to listen on port "
                         + port + " or listening for a connection", e);
+
+
             } finally {
                 try {
                     Closeables.close(out, true);
                     Closeables.close(in, true);
                 } catch (IOException e) {
-                    throw Throwables.propagate(e);
+                    logger.info("Failed closing input and/or output streams. Error = "+e.getMessage(), e);
                 }
                 serverDownLatch.countDown();
             }
         });
         serverThread.start();
+        try {
+            if (!serverUpLatch.await(60, TimeUnit.SECONDS)) {
+                throw new RuntimeException("Server has not finished starting in allotted time");
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Interrupted while waiting for server to start");
+        }
     }
 
     public void stop() {

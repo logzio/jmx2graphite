@@ -26,13 +26,8 @@ public class TestGraphiteClient {
         // Generate random port between [10000, 65000)
         server = new DummyGraphiteServer(port);
         logger.info("Starting dummy graphite server on port {}", port);
-        new Thread(() -> {
-            try {
-                server.start();
-            } catch (Exception e) {
-                logger.error("failed: " + e.getMessage(), e);
-            }
-        }).start();
+        server.start();
+
     }
 
     public void stopMockGrahiteServer() {
@@ -40,7 +35,7 @@ public class TestGraphiteClient {
         server.stop();
     }
 
-    @Test(timeout = 10000)
+    @Test(timeout = 60000)
     public void testOnServerShutdown() throws Exception {
         int connectTimeout = 1000;
         int socketTimeout = 1000;
