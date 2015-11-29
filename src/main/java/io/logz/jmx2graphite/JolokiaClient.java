@@ -124,7 +124,7 @@ public class JolokiaClient {
                 for (String attrMetricName : metricToValue.keySet()) {
                     try {
                         metricValues.add(new MetricValue(
-                                GraphiteClient.sanitizeMetricName(mbeanName) + "." + attrMetricName,
+                                GraphiteClient.sanitizeMetricName(mbeanName, /*keepDot*/ true) + "." + attrMetricName,
                                 metricToValue.get(attrMetricName),
                                 metricTime));
                     } catch (IllegalArgumentException e) {
@@ -146,14 +146,14 @@ public class JolokiaClient {
                 Map<String, Number> flattenValueTree = flatten((Map) value);
 
                 for (String internalMetricName : flattenValueTree.keySet()) {
-                    Object internalValue = flattenValueTree.get(internalMetricName);
-                    if (internalValue instanceof Number) {
-                        metricValues.put(GraphiteClient.sanitizeMetricName(key) + "." + GraphiteClient.sanitizeMetricName(internalMetricName), (Number) internalValue);
-                    }
+                    metricValues.put(
+                            GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false) + "."
+                            + GraphiteClient.sanitizeMetricName(internalMetricName, /*keepDot*/ false),
+                            flattenValueTree.get(internalMetricName));
                 }
             } else {
                 if (value instanceof Number) {
-                    metricValues.put(GraphiteClient.sanitizeMetricName(key), (Number) value);
+                    metricValues.put(GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false), (Number) value);
                 }
             }
         }

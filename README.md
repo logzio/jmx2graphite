@@ -144,7 +144,7 @@ Of course I started Googling and saw the following:
 
 - [JMXTrans](https://github.com/jmxtrans/jmxtrans)
    I had several issues which got me stomped: 
-     - You can instruct it to sample all JMX metrics. Instead you have to specify exactly which MBeans which you want and also their attributes - this can be quite a long list. In order to compose this list you have to fire up JMX Console, find the bean you are interested at, extract its name and add several lines of config to your config file. Then you have to copy the attribute names you want from this mbean. Rinse and repeat for every bean. For me, I just wanted all, since when you benchmark a JVM you don't know where the problem is so you want to start with everything at hand. From my handful experience with JMX, polling all beans doesn't impact the running JVM. Graphite can be boasted with hardware if it will become the bottleneck. Essentially I would like to add blacklist/whitelist to jmx2graphite, but it should be straightforward wildcard expession and not regular expression based.
+     - You can't instruct it to sample all JMX metrics. Instead you have to specify exactly which MBeans which you want and also their attributes - this can be quite a long list. In order to compose this list you have to fire up JMX Console, find the bean you are interested at, extract its name and add several lines of config to your config file. Then you have to copy the attribute names you want from this mbean. Rinse and repeat for every bean. For me, I just wanted all, since when you benchmark a JVM you don't know where the problem is so you want to start with everything at hand. From my handful experience with JMX, polling all beans doesn't impact the running JVM. Graphite can be boasted with hardware if it will become the bottleneck. Essentially I would like to add blacklist/whitelist to jmx2graphite, but it should be straightforward wildcard expession and not regular expression based.
      - I had trouble understanding how to configure it polling several JVMs. It invovles writing a YAML file and then running a CLI for generating the configuration file for JMXTrans. Too complicated in my opinion. 
 - [jmxproxy](https://github.com/mk23/jmxproxy)
    It's an HTTP REST server allowing you to fetch mbeans from a given JVM using REST to it. You are supposed to have one per your cluster. Great work there. The biggest drawback here was that you have to specify a predefined list of mbeans to retrieve - I wanted it all - it's too much work to compose the list of mbeans for: Camel, Kafka, Zookeeper, your own, etc.
@@ -180,6 +180,11 @@ We welcome any contribution! You can help in the following way:
 
 ## Building and Deploying
 TBD
+
+# Changelog
+
+- v1.0.1 
+  - MBean name got its dots converted into _ which results in flattening your beans too much. Now the dot is kept.
 
 #License
 

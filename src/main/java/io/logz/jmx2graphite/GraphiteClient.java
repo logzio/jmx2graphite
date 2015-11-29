@@ -29,7 +29,7 @@ public class GraphiteClient implements Closeable {
             prefixElements.add(sanitizeMetricName(serviceName));
         }
         if (serviceHost != null && !serviceHost.isEmpty()) {
-            prefixElements.add(sanitizeMetricName(serviceHost));
+            prefixElements.add(sanitizeMetricName(serviceHost, /*keepDot*/ false));
         }
         if (!prefixElements.isEmpty()) {
             metricsPrefix = Joiner.on('.').join(prefixElements).concat(".");
@@ -47,6 +47,10 @@ public class GraphiteClient implements Closeable {
     }
 
     public static String sanitizeMetricName(String s) {
+        return sanitizeMetricName(s, /*keepDot*/ true);
+    }
+
+    public static String sanitizeMetricName(String s, boolean keepDot) {
         StringBuilder sb = new StringBuilder(s.length());
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
@@ -56,7 +60,7 @@ public class GraphiteClient implements Closeable {
                 sb.append('.');
             } else if (c == ',') {
                 sb.append('.');
-            } else if (c == '.') {
+            } else if (c == '.' && !keepDot) {
                 sb.append('_');
             } else if (c == '"') {
                 // Removing it
