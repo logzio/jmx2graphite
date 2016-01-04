@@ -179,10 +179,25 @@ We welcome any contribution! You can help in the following way:
 - Pull requests for any addition you can think of
 
 ## Building and Deploying
-TBD
+# Build
+```
+./gradlew build
+docker build -t logzio/jmx2graphite .
+```
+
+# Deploy
+```
+docker login 
+docker push logzio/jmx2graphite
+```
+
 
 # Changelog
 
+- v1.0.2 
+  - MBean name properties (the part that is after the ':') retrieved from jolokia were sorted lexically by property name. 
+    This removed any creation order of those properties which actually represent a tree path, thus the fix is to 
+    maintain the creation order.
 - v1.0.1 
   - MBean name got its dots converted into _ which results in flattening your beans too much. Now the dot is kept.
 

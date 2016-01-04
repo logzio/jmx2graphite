@@ -46,7 +46,8 @@ public class JolokiaClient {
     public List<MetricBean> getBeans() throws JolokiaClientPollingFailure {
         try {
             stopwatch.reset().start();
-            HttpResponse httpResponse = Get(new URI(jolokiaFullURL + "list"))
+            logger.debug("Retrieving /list of bean from Jolokia ({})...", jolokiaFullURL);
+            HttpResponse httpResponse = Get(new URI(jolokiaFullURL + "list?canonicalNaming=false"))
                     .connectTimeout(connectTimeout)
                     .socketTimeout(socketTimeout)
                     .execute().returnResponse();
@@ -90,7 +91,7 @@ public class JolokiaClient {
 
         try {
             String requestBody = objectMapper.writeValueAsString(readRequests);
-            HttpResponse httpResponse = Post(jolokiaFullURL+"read?ignoreErrors=true")
+            HttpResponse httpResponse = Post(jolokiaFullURL+"read?ignoreErrors=true&canonicalNaming=false")
                     .connectTimeout(connectTimeout)
                     .socketTimeout(socketTimeout)
                     .bodyString(requestBody, ContentType.APPLICATION_JSON)
