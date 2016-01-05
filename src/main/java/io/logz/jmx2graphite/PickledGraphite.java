@@ -3,6 +3,8 @@ package io.logz.jmx2graphite;
 import com.codahale.metrics.graphite.GraphiteSender;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
+import com.nurkiewicz.asyncretry.AsyncRetryExecutor;
+import com.nurkiewicz.asyncretry.RetryExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,6 +12,7 @@ import javax.net.SocketFactory;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -48,6 +51,8 @@ public class PickledGraphite implements GraphiteSender {
     private Writer writer;
     private int failures;
     private long writeTimeoutMs;
+    private final ScheduledExecutorService scheduler;
+    private final RetryExecutor executor;
 
     /**
      * Creates a new client which connects to the given address using the default {@link SocketFactory}. This defaults
@@ -134,13 +139,7 @@ public class PickledGraphite implements GraphiteSender {
      */
     public PickledGraphite(InetSocketAddress address, SocketFactory socketFactory, Charset charset, int batchSize,
                            int writeTimeoutMs) {
-        this.address = address;
-        this.hostname = null;
-        this.port = -1;
-        this.socketFactory = socketFactory;
-        this.charset = charset;
-        this.batchSize = batchSize;
-        this.writeTimeoutMs = writeTimeoutMs;
+        this(address, null, -1, socketFactory, charset, batchSize, writeTimeoutMs);
     }
 
     /**
@@ -201,7 +200,7 @@ public class PickledGraphite implements GraphiteSender {
      *            The timeout in milliseconds for writing the batched metrics to the socket (As a whole)
      */
     public PickledGraphite(String hostname, int port, SocketFactory socketFactory, int batchSize, int writeTimeoutMs) {
-        this(hostname, port, socketFactory, UTF_8, batchSize, writeTimeoutMs);
+        this(null, hostname, port, socketFactory, UTF_8, batchSize, writeTimeoutMs);
     }
 
     /**
@@ -220,17 +219,29 @@ public class PickledGraphite implements GraphiteSender {
      * @param writeTimeoutMs
      *            The timeout in milliseconds for writing the batched metrics to the socket (As a whole)
      */
-    public PickledGraphite(String hostname, int port, SocketFactory socketFactory, Charset charset, int batchSize, 
+    public PickledGraphite(InetSocketAddress address, String hostname, int port, SocketFactory socketFactory, Charset charset, int batchSize,
                            int writeTimeoutMs) {
-        this.address = null;
+        this.address = address;
         this.hostname = hostname;
         this.port = port;
         this.socketFactory = socketFactory;
         this.charset = charset;
         this.batchSize = batchSize;
         this.writeTimeoutMs = writeTimeoutMs;
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+        executor = new AsyncRetryExecutor(scheduler)
+                .retryIf(this::brokenPipe)
+                .retryOn(SocketException.class)
+                .withExponentialBackoff(500, 2)     //500ms times 2 after each retry
+                .withMaxDelay(writeTimeoutMs)
+                .withUniformJitter()                //add between +/- 100 ms randomly
+                .withMaxRetries(3)
+                .firstRetryNoDelay();
     }
 
+    private boolean brokenPipe(Throwable t) {
+        return t instanceof SocketException && "Broken pipe".equals(t.getMessage());
+    }
     @Override
     public void connect() throws IllegalStateException, IOException {
         if (isConnected()) {
@@ -246,6 +257,7 @@ public class PickledGraphite implements GraphiteSender {
 
         this.socket = socketFactory.createSocket(address.getAddress(), address.getPort());
         this.writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), charset));
+        LOGGER.debug("Connected to graphite at "+address);
     }
 
     @Override
@@ -310,51 +322,121 @@ public class PickledGraphite implements GraphiteSender {
         return failures;
     }
 
+    private void ensureConnected() throws IOException {
+        if (!isConnected()) connect();
+    }
+
     /**
      * 1. Run the pickler script to package all the pending metrics into a single message
      * 2. Send the message to graphite
      * 3. Clear out the list of metrics
      */
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     private void writeMetrics() throws IOException {
+        try {
+            executor.doWithRetry(retryContext -> {
+                if (retryContext.getRetryCount() > 0) {
+                    LOGGER.info("Failed writing metrics (Error: "+retryContext.getLastThrowable()+"). Trying again (Retry #"+retryContext.getRetryCount()+")");
+                }
+                tryWritingMetrics();
+                if (retryContext.getRetryCount() > 0) {
+                    LOGGER.info("Successfully wrote metrics at attempt #"+(retryContext.getRetryCount()+1));
+                }
+            }).get(writeTimeoutMs, TimeUnit.MILLISECONDS);
+
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Wrote {} metrics", metrics.size());
+            }
+        } catch (InterruptedException e) {
+            this.failures++;
+            throw new RuntimeException("Got interrupted while waiting for pickled metrics to be finished writing to the socket", e);
+        } catch (ExecutionException e) {
+            this.failures++;
+            throw new RuntimeException("Failed writing pickled metrics to the socket: "+e.getCause().getMessage(), e.getCause());
+        } catch (TimeoutException e) {
+            // In case of timeouts let's close so that next write will attempt to open a new socket
+            disconnect();
+            throw new IOException("Got timeout ("+writeTimeoutMs+"ms) on waiting for pickled metrics to be written to the socket");
+        } finally {
+            // if there was an error, we might miss some data. for now, drop those on the floor and
+            // try to keep going.
+            metrics.clear();
+        }
+
+//        if (metrics.size() > 0) {
+//            try {
+//                byte[] payload = pickleMetrics(metrics);
+//                byte[] header = ByteBuffer.allocate(4).putInt(payload.length).array();
+//
+//                Future<?> future = executorService.submit(() -> {
+//                    try {
+//                        OutputStream outputStream = socket.getOutputStream();
+//                        outputStream.write(header);
+//                        outputStream.write(payload);
+//                        outputStream.flush();
+//                    } catch (SocketException e) {
+//                        if (e.getMessage().equals("Broken pipe")) {
+//                            try {
+//                                disconnect();
+//                            } catch (IOException e2) {
+//                                LOGGER.warn("Failed to disconnect from Graphite", e);
+//                            }
+//                            throw e;
+//                        }
+//                    } catch (IOException e) {
+//                        throw Throwables.propagate(e);
+//                    }
+//                });
+//
+//                try {
+//                    future.get(writeTimeoutMs, TimeUnit.MILLISECONDS);
+//                } catch (InterruptedException e) {
+//                    this.failures++;
+//                    throw new RuntimeException("Got interrupted while waiting for pickled metrics to be finished writing to the socket", e);
+//                } catch (ExecutionException e) {
+//                    this.failures++;
+//                    throw new RuntimeException("Failed writing pickled metrics to the socket: "+e.getCause().getMessage(), e.getCause());
+//                } catch (TimeoutException e) {
+//                    // In case of timeouts let's close so that next write will attempt to open a new socket
+//                    disconnect();
+//                    throw new IOException("Got timeout on waiting for pickled metrics to be written to the socket");
+//                }
+//                if (LOGGER.isDebugEnabled()) {
+//                    LOGGER.debug("Wrote {} metrics", metrics.size());
+//                }
+//            } catch (IOException e) {
+//                this.failures++;
+//                throw e;
+//            } finally {
+//                // if there was an error, we might miss some data. for now, drop those on the floor and
+//                // try to keep going.
+//                metrics.clear();
+//            }
+//        }
+    }
+
+    private void tryWritingMetrics() throws IOException {
         if (metrics.size() > 0) {
+            ensureConnected();
             try {
                 byte[] payload = pickleMetrics(metrics);
                 byte[] header = ByteBuffer.allocate(4).putInt(payload.length).array();
-
-                Future<?> future = executorService.submit(() -> {
+                OutputStream outputStream = socket.getOutputStream();
+                outputStream.write(header);
+                outputStream.write(payload);
+                outputStream.flush();
+            } catch (SocketException e) {
+                if (e.getMessage().equals("Broken pipe")) {
                     try {
-                        OutputStream outputStream = socket.getOutputStream();
-                        outputStream.write(header);
-                        outputStream.write(payload);
-                        outputStream.flush();
-                    } catch (IOException e) {
-                        throw Throwables.propagate(e);
+                        LOGGER.info("Pipe (socket) is broken - disconnecting from Graphite");
+                        disconnect();
+                    } catch (IOException e2) {
+                        LOGGER.warn("Failed to disconnect from Graphite", e);
                     }
-                });
-
-                try {
-                    future.get(writeTimeoutMs, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    this.failures++;
-                    throw new RuntimeException("Got interrupted while waiting for pickled metrics to be finished writing to the socket", e);
-                } catch (ExecutionException e) {
-                    this.failures++;
-                    throw new RuntimeException("Failed writing pickled metrics to the socket: "+e.getCause().getMessage(), e.getCause());
-                } catch (TimeoutException e) {
-                    // In case of timeouts let's close so that next write will attempt to open a new socket
-                    disconnect();
-                    throw new IOException("Got timeout on waiting for pickled metrics to be written to the socket");
-                }
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Wrote {} metrics", metrics.size());
+                    throw e;
                 }
             } catch (IOException e) {
-                this.failures++;
-                throw e;
-            } finally {
-                // if there was an error, we might miss some data. for now, drop those on the floor and
-                // try to keep going.
-                metrics.clear();
+                throw Throwables.propagate(e);
             }
         }
     }

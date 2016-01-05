@@ -91,7 +91,6 @@ public class GraphiteClient implements Closeable {
         try {
             graphite.flush();
         } catch (Exception e) {
-            logger.error("Failed writing metrics to graphite - flush: ", e);
             throw new GraphiteWriteFailed("Failed writing metrics to graphite (flush). Error = "+e.getMessage(), e);
         }
         failuresAtLastWrite = graphite.getFailures() - failuresBefore;

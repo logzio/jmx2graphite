@@ -17,8 +17,8 @@
         </filter>
     </appender>
 
-    <logger name="io.logz.jmx2graphite.JolokiaClient" level="DEBUG"/>
-
+    <logger name="io.logz.jmx2graphite" level="INFO"/>
+    <!--<logger name="com.nurkiewicz.asyncretry" level="TRACE"/>-->
     <root level="INFO">
         <appender-ref ref="default.console"/>
     </root>

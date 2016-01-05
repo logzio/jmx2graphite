@@ -194,6 +194,8 @@ docker push logzio/jmx2graphite
 
 # Changelog
 
+- v1.0.3
+  - Wouldn't recover from Graphite server restart (failed on broken pipe for a long time)
 - v1.0.2 
   - MBean name properties (the part that is after the ':') retrieved from jolokia were sorted lexically by property name. 
     This removed any creation order of those properties which actually represent a tree path, thus the fix is to 

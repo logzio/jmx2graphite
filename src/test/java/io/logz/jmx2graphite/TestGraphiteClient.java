@@ -30,7 +30,7 @@ public class TestGraphiteClient {
 
     }
 
-    public void stopMockGrahiteServer() {
+    public void stopMockGraphiteServer() {
         logger.info("Shutting down mock graphite server");
         server.stop();
     }
@@ -45,7 +45,7 @@ public class TestGraphiteClient {
 
         startMockGraphiteServer();
         client.sendMetrics(dummyMetrics);
-        stopMockGrahiteServer();
+        stopMockGraphiteServer();
 
         try {
             for (int i = 0; i < 1000; i++) {
@@ -55,6 +55,36 @@ public class TestGraphiteClient {
             // Great
             return;
         }
+
         fail("Send metrics succeeded but server is down");
+    }
+
+    @Test
+    public void testOnServerRestart() throws InterruptedException {
+        int connectTimeout = 1000;
+        int socketTimeout = 1000;
+        GraphiteClient client = new GraphiteClient("bla-host.com", "bla-service", "localhost", port, connectTimeout, socketTimeout, 20000);
+
+        ArrayList<MetricValue> dummyMetrics = Lists.newArrayList(new MetricValue("dice", 4, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())));
+
+        startMockGraphiteServer();
+
+        client.sendMetrics(dummyMetrics);
+
+        stopMockGraphiteServer();
+
+        Thread.sleep(3000);
+
+        startMockGraphiteServer();
+
+        try {
+            for (int i = 0; i < 1000; i++) {
+                client.sendMetrics(dummyMetrics);
+            }
+        } catch (GraphiteClient.GraphiteWriteFailed e) {
+            logger.error("failed: "+e.getMessage(), e);
+            fail("Send metrics failed, this shouldn't happen");
+        }
+
     }
 }
