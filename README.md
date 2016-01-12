@@ -17,6 +17,7 @@ The metrics reported have the following names template:
 
 # How to run?
 
+## Using Docker (preferred)
 If you don't have docker, install it first - instructions [here](http://docs.docker.com/engine/installation/).
 
 ```bash
@@ -39,11 +40,30 @@ docker run -i -t -d --name jmx2graphite \
 - `--rm=true`: removes the docker image created upon using `docker run` command, so you can just call `docker run` command again.
 
 
-## Optional environment variables
+### Optional environment variables
 
 - GRAPHITE_PORT: Pickle protocol port of graphite. Defaults to 2004.
 - SERVICE_HOST: By default the host is taken from Jolokia URL and serves as the service host, unless you use this variable.
 - INTERVAL_IN_SEC: By default 30 seconds unless you use this variable.
+
+## Using bash 
+1. Clone the repository ```git clone https://github.com/logzio/jmx2graphite```
+2. ```cd jmx2graphite```
+3. Build it: ```./gradlew build```
+4. Copy the tar/zip file created from ```build/distributions/*.tar``` or *.zip to the host computer you wish to run this on
+5. Unzip it in any directory you'd like
+6. Move the directory jmx2graphite from ```opt/jmxgraphite``` to a location which fits you. Normally you would move it to ```/opt```
+7. Edit the configuration file at ```jmx2graphite/conf/application.conf```: The mandatory items are:
+   1. service/jolokiaUrl - Fill in the full URL to the JVM running Jolokia (It exposes your JMX as a REST service, normally under port 8778).
+   2. service/name - The role name of the service.
+   3. graphite/hostname  - Graphite host name the metrics will be sent to
+8. cd ```jmx2graphite/bin```
+9. run ```./jmx2graphite```. This runs interactively, so pressing ctrl-c will make it stop. 
+10. If you wish to run this as a service you need to create a service wrapper for it. Any pull requests for making it are welcome! If it's possible running it as docker making it simpler.
+
+   
+
+   
 
 # How to expose JMX Metrics using Jolokia Agent
 
