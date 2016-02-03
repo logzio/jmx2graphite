@@ -194,6 +194,8 @@ docker push logzio/jmx2graphite
 
 # Changelog
 
+- v1.0.4
+  - logback.xml now scan it self every 30 seconds. Improved error message printed to the log
 - v1.0.3
   - Wouldn't recover from Graphite server restart (failed on broken pipe for a long time)
 - v1.0.2 

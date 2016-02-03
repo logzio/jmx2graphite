@@ -77,7 +77,7 @@ public class GraphiteClient implements Closeable {
                 graphite.connect();
             }
         } catch (Exception e) {
-            throw new GraphiteWriteFailed("Failed connecting to Graphite. Error = "+e.getMessage(), e);
+            throw new GraphiteWriteFailed("Failed connecting to Graphite. Error = "+e.getClass()+": "+e.getMessage(), e);
         }
 
         int failuresBefore = graphite.getFailures();
