@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.fluent.Request;
 import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,17 +30,19 @@ public class JolokiaClient {
 
     private static final Logger logger = LoggerFactory.getLogger(JolokiaClient.class);
     private String jolokiaFullURL;
+    public String jolokiaUserPass;
     private int connectTimeout = (int) TimeUnit.SECONDS.toMillis(30);
     private int socketTimeout = (int) TimeUnit.SECONDS.toMillis(30);;
 
     private ObjectMapper objectMapper;
     private Stopwatch stopwatch = Stopwatch.createUnstarted();
 
-    public JolokiaClient(String jolokiaFullURL) {
+    public JolokiaClient(String jolokiaFullURL, String jolokiaUserPass) {
         this.jolokiaFullURL = jolokiaFullURL;
         if (!jolokiaFullURL.endsWith("/")) {
             this.jolokiaFullURL = jolokiaFullURL +"/";
         }
+        this.jolokiaUserPass = jolokiaUserPass;
         objectMapper = new ObjectMapper();
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
@@ -50,6 +54,7 @@ public class JolokiaClient {
             HttpResponse httpResponse = Get(new URI(jolokiaFullURL + "list?canonicalNaming=false"))
                     .connectTimeout(connectTimeout)
                     .socketTimeout(socketTimeout)
+                    .addHeader("Authorization", "Basic " + jolokiaUserPass)
                     .execute().returnResponse();
             logger.debug("GET /list from jolokia took {} ms", stopwatch.stop().elapsed(TimeUnit.DAYS.MILLISECONDS));
             if (httpResponse.getStatusLine().getStatusCode() != 200) {
@@ -91,11 +96,14 @@ public class JolokiaClient {
 
         try {
             String requestBody = objectMapper.writeValueAsString(readRequests);
-            HttpResponse httpResponse = Post(jolokiaFullURL+"read?ignoreErrors=true&canonicalNaming=false")
+            Request httpRequest = Post(jolokiaFullURL+"read?ignoreErrors=true&canonicalNaming=false")
                     .connectTimeout(connectTimeout)
                     .socketTimeout(socketTimeout)
-                    .bodyString(requestBody, ContentType.APPLICATION_JSON)
-                    .execute().returnResponse();
+                    .bodyString(requestBody, ContentType.APPLICATION_JSON);
+            if (jolokiaUserPass != null && !jolokiaUserPass.isEmpty()) {
+                httpRequest.addHeader("Authorization", "Basic " + jolokiaUserPass);
+            }
+            HttpResponse httpResponse = httpRequest.execute().returnResponse();
 
             if (httpResponse.getStatusLine().getStatusCode() != 200) {
                 throw new RuntimeException("Failed reading beans from jolokia. Response = "+httpResponse.getStatusLine());
@@ -149,7 +157,7 @@ public class JolokiaClient {
                 for (String internalMetricName : flattenValueTree.keySet()) {
                     metricValues.put(
                             GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false) + "."
-                            + GraphiteClient.sanitizeMetricName(internalMetricName, /*keepDot*/ false),
+                                    + GraphiteClient.sanitizeMetricName(internalMetricName, /*keepDot*/ false),
                             flattenValueTree.get(internalMetricName));
                 }
             } else {
