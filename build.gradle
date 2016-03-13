@@ -6,7 +6,7 @@ apply plugin:'application'
 mainClassName = 'io.logz.jmx2graphite.Jmx2Graphite'
 
 group = "io.logz"
-version = "1.0.4"
+version = "1.0.5"
 
 repositories {
     mavenCentral()

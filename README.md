@@ -214,6 +214,9 @@ docker push logzio/jmx2graphite
 
 # Changelog
 
+- v1.0.5
+  - logback.xml now scan it self every 10 seconds instead of 30 to get that fast feedback loop
+  - Added an XML element sample to logback.xml to trace the metrics that are sent to Graphite
 - v1.0.4
   - logback.xml now scan it self every 30 seconds. Improved error message printed to the log
 - v1.0.3
