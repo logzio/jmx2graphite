@@ -214,6 +214,8 @@ docker push logzio/jmx2graphite
 
 # Changelog
 
+- v1.0.6
+  - Fixes #4: logback will save history for 7 days
 - v1.0.5
   - logback.xml now scan it self every 10 seconds instead of 30 to get that fast feedback loop
   - Added an XML element sample to logback.xml to trace the metrics that are sent to Graphite

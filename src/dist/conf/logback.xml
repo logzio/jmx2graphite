@@ -29,8 +29,9 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
             <fileNamePattern>/var/log/jmx2graphite/jmx2graphite.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
-            <!-- keep 3 days' worth of history -->
-            <maxHistory>1</maxHistory>
+
+            <!-- keep 7 days' worth of history -->
+            <maxHistory>7</maxHistory>
         </rollingPolicy>
     </appender>
 
