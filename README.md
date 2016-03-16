@@ -214,6 +214,8 @@ docker push logzio/jmx2graphite
 
 # Changelog
 
+- v1.0.7
+  - Issue #2: Log file appender will show TRACE debug level as well
 - v1.0.6
   - Fixes #4: logback will save history for 7 days
 - v1.0.5

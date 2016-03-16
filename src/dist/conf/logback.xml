@@ -24,7 +24,7 @@
             <pattern>%d{yy/MM/dd HH:mm:ss} %p %c{2}: %m%n</pattern>
         </encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>DEBUG</level>
+            <level>TRACE</level>
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover -->
