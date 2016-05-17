@@ -31,8 +31,15 @@ docker run -i -t -d --name jmx2graphite \
 ```
 
 *Environment variables*
-- JOLOKIA_URL: The full URL to jolokia on the JVM you want to sample
-- SERVICE_NAME: The name of thes service (it's role).
+- JOLOKIA_URL: The full URL to jolokia on the JVM you want to sample. When jolokia (and the java app) is running inside a docker container
+there are two ways to specify the host in the jolokia URL so this URL will be reachable by jmx2graphite which also runs inside a docker instance:
+  - The easy one: On the docker running your java app and Jolokia, makes sure to expose the jolokia port (using -v), and then use the *host* IP of the machine
+    running the dockers.
+  - Container linking: You can use a hostname you invent like "myapp.com", and then when running jmx2graphite using Docker, add the option: 
+  ``` --link myservice-docker-name:myapp.com"```. So if your app is running in docker named "crazy_service" then you would write jolokia URL 
+  as "http://myapp.com:8778/jolokia", and when running jmx2graphite using docker add the option "--link crazy_service:myapp.com". 
+  What this does is add mapping between the host name myapp.com to the internal IP of the docker running your service to the /etc/hosts file.
+- SERVICE_NAME: The name of the service (it's role).
 - GRAPHITE_HOST: The hostname/IP of graphite
 
 *Rest of command*
@@ -42,7 +49,7 @@ docker run -i -t -d --name jmx2graphite \
 
 ### Optional environment variables
 
-- GRAPHITE_PORT: Pickle protocol port of graphite. Defaults to 2004.
+- GRAPHITE_PORT: *Pickle* protocol port of graphite. Defaults to 2004. Don't use the text protocol port (2003) otherwise it wouldn't work.
 - SERVICE_HOST: By default the host is taken from Jolokia URL and serves as the service host, unless you use this variable.
 - INTERVAL_IN_SEC: By default 30 seconds unless you use this variable.
 
