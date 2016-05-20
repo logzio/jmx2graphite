@@ -31,7 +31,7 @@ public class Jmx2GraphiteConfiguration {
 
     public Jmx2GraphiteConfiguration(Config config) throws IllegalConfiguration {
         jolokiaUrl = config.getString("service.jolokiaUrl");
-        String jolokiaHost = null;
+        String jolokiaHost;
         try {
             URL jolokia = new URL(jolokiaUrl);
             jolokiaHost = jolokia.getHost();
@@ -57,6 +57,18 @@ public class Jmx2GraphiteConfiguration {
         } else {
             graphiteWriteTimeoutMs = Math.round(0.7f * TimeUnit.SECONDS.toMillis(intervalInSeconds));
         }
+    }
+
+    public Jmx2GraphiteConfiguration(String jolokiaUrl, String graphiteHostname, int graphitePort, String serviceName, String serviceHost, int intervalInSeconds, int graphiteConnectTimeout, int graphiteSocketTimeout, int graphiteWriteTimeoutMs) {
+        this.jolokiaUrl = jolokiaUrl;
+        this.graphiteHostname = graphiteHostname;
+        this.graphitePort = graphitePort;
+        this.serviceName = serviceName;
+        this.serviceHost = serviceHost;
+        this.intervalInSeconds = intervalInSeconds;
+        this.graphiteConnectTimeout = graphiteConnectTimeout;
+        this.graphiteSocketTimeout = graphiteSocketTimeout;
+        this.graphiteWriteTimeoutMs = graphiteWriteTimeoutMs;
     }
 
     public int getGraphiteConnectTimeout() {

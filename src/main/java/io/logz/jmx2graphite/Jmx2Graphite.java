@@ -29,7 +29,7 @@ public class Jmx2Graphite {
     private Scheduler scheduler;
 
     public static void main(String[] args) {
-        Config config = ConfigFactory.load();
+       Config config = ConfigFactory.load();
         Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(config);
         Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration);
         main.run();

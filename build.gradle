@@ -1,12 +1,13 @@
 description 'JMX 2 Graphite. Dumps JMX beans into Graphite'
 
 apply plugin:'java'
+apply plugin: 'kotlin'
 apply plugin:'application'
 
 mainClassName = 'io.logz.jmx2graphite.Jmx2Graphite'
 
 group = "io.logz"
-version = "1.0.7"
+version = "1.0.8"
 
 repositories {
     mavenCentral()
@@ -26,6 +27,7 @@ dependencies {
     compile 'com.nurkiewicz.asyncretry:asyncretry:0.0.7'
     testCompile 'io.netty:netty-all:4.0.33.Final'
     testCompile 'junit:junit:4.12'
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }
 
 sourceCompatibility = 1.8
@@ -54,6 +56,18 @@ startScripts {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.8'
+}
+buildscript {
+    ext.kotlin_version = '1.0.1-2'
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
 }
 
 
