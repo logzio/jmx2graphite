@@ -221,6 +221,8 @@ docker push logzio/jmx2graphite
 
 # Changelog
 
+- v1.0.8
+  - First migration step to Kotlin language
 - v1.0.7
   - Issue #2: Log file appender will show TRACE debug level as well
 - v1.0.6
