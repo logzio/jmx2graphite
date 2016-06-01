@@ -23,6 +23,7 @@ public class MetricsPoller implements Job {
     private static final Logger logger = LoggerFactory.getLogger(MetricsPoller.class);
 
     private String jolokiaUrl;
+    public String jolokiaUserPass;
     private String graphiteHostname;
     private int graphitePort;
     private String serviceName;
@@ -34,18 +35,21 @@ public class MetricsPoller implements Job {
 
     @Inject
     public MetricsPoller(Jmx2GraphiteConfiguration conf) {
-        this(conf.jolokiaUrl, conf.graphiteHostname, conf.graphitePort, conf.serviceName,
-                conf.serviceHost,
+        this(conf.jolokiaUrl, conf.jolokiaUserPass,
+                conf.graphiteHostname, conf.graphitePort,
+                conf.serviceName, conf.serviceHost,
                 conf.getGraphiteConnectTimeout(),
                 conf.graphiteSocketTimeout,
                 conf.intervalInSeconds,
                 conf.getGraphiteWriteTimeoutMs());
     }
 
-    public MetricsPoller(String jolokiaUrl, String graphiteHostname, int graphitePort, String serviceName,
+    public MetricsPoller(String jolokiaUrl, String jolokiaUserPass,
+                         String graphiteHostname, int graphitePort, String serviceName,
                          String serviceHost, int graphiteConnectTimeout, int graphiteSocketTimeout,
                          int pollingIntervalSeconds, int graphiteWriteTimeoutMs) {
         this.jolokiaUrl = jolokiaUrl;
+        this.jolokiaUserPass = jolokiaUserPass;
         this.graphiteHostname = graphiteHostname;
         this.graphitePort = graphitePort;
         this.serviceName = serviceName;
@@ -114,7 +118,7 @@ public class MetricsPoller implements Job {
     }
 
     private JolokiaClient createJolokiaClient() {
-        return new JolokiaClient(jolokiaUrl);
+        return new JolokiaClient(jolokiaUrl, jolokiaUserPass);
     }
 
     @Override

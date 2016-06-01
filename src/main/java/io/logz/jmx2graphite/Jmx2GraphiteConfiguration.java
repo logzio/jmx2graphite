@@ -13,6 +13,9 @@ public class Jmx2GraphiteConfiguration {
     /* Jolokia full URL */
     public String jolokiaUrl;
 
+    /* Basic auth for Jolokia in Base64 */
+    public String jolokiaUserPass;
+
     public String graphiteHostname;
 
     public int graphitePort;
@@ -38,6 +41,7 @@ public class Jmx2GraphiteConfiguration {
         } catch (MalformedURLException e) {
             throw new IllegalConfiguration("service.jolokiaUrl must be a valid URL. Error = "+e.getMessage());
         }
+        jolokiaUserPass = config.getString("service.jolokiaUserPass");
 
         graphiteHostname = config.getString("graphite.hostname");
         graphitePort = config.getInt("graphite.port");
