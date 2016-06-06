@@ -37,7 +37,7 @@
 
     <!-- Enable this line to get a list of metric sent to Graphite -->
     <!--
-    <logger name="io.logz.jmx2graphite.MetricsPoller" level="TRACE"/>
+    <logger name="io.logz.jmx2graphite.MetricsPipelinene" level="TRACE"/>
     -->
 
     <logger name="io.logz.jmx2graphite" level="INFO"/>

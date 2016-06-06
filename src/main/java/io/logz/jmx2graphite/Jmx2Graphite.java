@@ -13,6 +13,9 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
@@ -25,64 +28,36 @@ public class Jmx2Graphite {
     private static final Logger logger = LoggerFactory.getLogger(Jmx2Graphite.class);
 
     private Jmx2GraphiteConfiguration conf;
-    private Injector injector;
-    private Scheduler scheduler;
+    private ScheduledThreadPoolExecutor taskScheduler;
+    private MetricsPoller poller;
 
-    public static void main(String[] args) {
-       Config config = ConfigFactory.load();
-        Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(config);
-        Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration);
-        main.run();
-    }
-
-    public Jmx2Graphite(Jmx2GraphiteConfiguration conf) {
+    public Jmx2Graphite(Jmx2GraphiteConfiguration conf, MetricsPoller poller) {
         this.conf = conf;
+        this.taskScheduler = new ScheduledThreadPoolExecutor(1);
+        this.poller = poller;
     }
 
     public void run() {
-        try {
-            logger.info("Running with Jolokia URL: "+conf.jolokiaUrl);
-            logger.info("Graphite: host = "+conf.graphiteHostname +", port = "+conf.graphitePort);
 
-            injector = Guice.createInjector(new MyModule(conf));
+        logger.info("Running with Jolokia URL: "+conf.jolokiaUrl);
+        logger.info("Graphite: host = "+conf.graphiteHostname +", port = "+conf.graphitePort);
 
-            scheduler = StdSchedulerFactory.getDefaultScheduler();
-            scheduler.setJobFactory(injector.getInstance(GuiceJobFactory.class));
-            submitPollerJob();
-            enableHangupSupport();
+        enableHangupSupport();
 
-            scheduler.start();
-        } catch (SchedulerException e) {
-            throw Throwables.propagate(e);
-        }
-    }
-
-    private void submitPollerJob() throws SchedulerException {
-        JobDetail job = newJob(MetricsPoller.class)
-                .withIdentity("MetricsPoller", "Pollers")
-                .build();
-
-        // Trigger the job to run now, and then repeat every 40 seconds
-        Trigger trigger = newTrigger()
-                .withIdentity("ScheduledTrigger", "PollerTriggers")
-                .startNow()
-                .withSchedule(simpleSchedule()
-                        .withIntervalInSeconds(conf.intervalInSeconds)
-                        .repeatForever())
-                .build();
-
-        // Tell quartz to schedule the job using our trigger
-        scheduler.scheduleJob(job, trigger);
+        MetricsPipeline pipeline = new MetricsPipeline(conf, poller);
+        taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.intervalInSeconds, TimeUnit.SECONDS);
     }
 
     public void shutdown() {
         logger.info("Shutting down...");
-        if (scheduler != null) {
-            try {
-                scheduler.shutdown();
-            } catch (SchedulerException e) {
-                logger.info("Failed closing Quartz scheduler. Error = " + e.getMessage(), e);
-            }
+        try {
+            taskScheduler.shutdown();
+            taskScheduler.awaitTermination(20, TimeUnit.SECONDS);
+            taskScheduler.shutdownNow();
+        } catch (InterruptedException e) {
+
+            Thread.interrupted();
+            taskScheduler.shutdownNow();
         }
     }
 
