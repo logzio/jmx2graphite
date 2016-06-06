@@ -15,12 +15,12 @@ public class Jmx2Graphite {
 
     private Jmx2GraphiteConfiguration conf;
     private ScheduledThreadPoolExecutor taskScheduler;
-    private MetricsPoller poller;
+    private MBeanClient client;
 
-    public Jmx2Graphite(Jmx2GraphiteConfiguration conf, MetricsPoller poller) {
+    public Jmx2Graphite(Jmx2GraphiteConfiguration conf, MBeanClient client) {
         this.conf = conf;
         this.taskScheduler = new ScheduledThreadPoolExecutor(1);
-        this.poller = poller;
+        this.client = client;
     }
 
     public void run() {
@@ -30,7 +30,7 @@ public class Jmx2Graphite {
 
         enableHangupSupport();
 
-        MetricsPipeline pipeline = new MetricsPipeline(conf, poller);
+        MetricsPipeline pipeline = new MetricsPipeline(conf, client);
         taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.intervalInSeconds, TimeUnit.SECONDS);
     }
 

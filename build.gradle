@@ -4,7 +4,7 @@ apply plugin:'java'
 apply plugin: 'kotlin'
 apply plugin:'application'
 
-mainClassName = 'io.logz.jmx2graphite.Jmx2Graphite'
+mainClassName = 'io.logz.jmx2graphite.Jmx2GraphiteJolokia'
 
 group = "io.logz"
 version = "1.0.8"

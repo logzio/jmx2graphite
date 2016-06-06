@@ -24,12 +24,12 @@ import static org.apache.http.client.fluent.Request.Post;
 /**
  * @author amesika
  */
-public class JolokiaClient {
+public class JolokiaClient extends MBeanClient {
 
     private static final Logger logger = LoggerFactory.getLogger(JolokiaClient.class);
     private String jolokiaFullURL;
     private int connectTimeout = (int) TimeUnit.SECONDS.toMillis(30);
-    private int socketTimeout = (int) TimeUnit.SECONDS.toMillis(30);;
+    private int socketTimeout = (int) TimeUnit.SECONDS.toMillis(30);
 
     private ObjectMapper objectMapper;
     private Stopwatch stopwatch = Stopwatch.createUnstarted();
@@ -65,22 +65,6 @@ public class JolokiaClient {
         } catch (URISyntaxException  | IOException e) {
             throw new JolokiaClientPollingFailure("Failed retrieving list of beans from Jolokia. Error = "+e.getMessage(), e);
         }
-    }
-
-    private List<MetricBean> extractMetricsBeans(Map<String, Object> domains) {
-        List<MetricBean> result = Lists.newArrayList();
-        for (String domainName : domains.keySet()) {
-            Map<String, Object> domain = (Map<String, Object>) domains.get(domainName);
-            for (String mbeanName : domain.keySet()) {
-                Map<String, Object> mbean = (Map<String, Object>) domain.get(mbeanName);
-                Map<String, Object> attributes = (Map<String, Object>) mbean.get("attr");
-                if (attributes != null) {
-                    List<String> attrNames = new ArrayList<String>(attributes.keySet());
-                    result.add(new MetricBean(domainName + ":" + mbeanName, attrNames));
-                }
-            }
-        }
-        return result;
     }
 
     public List<MetricValue> getMetrics(List<MetricBean> beans) throws JolokiaClientPollingFailure {
@@ -138,29 +122,6 @@ public class JolokiaClient {
             throw new JolokiaClientPollingFailure("Failed reading beans from Jolokia. Error = "+e.getMessage(), e);
         }
     }
-
-    private static Map<String, Number> flatten(Map<String, Object> attrValues) {
-        Map<String, Number> metricValues = Maps.newHashMap();
-        for (String key : attrValues.keySet()) {
-            Object value = attrValues.get(key);
-            if (value instanceof Map) {
-                Map<String, Number> flattenValueTree = flatten((Map) value);
-
-                for (String internalMetricName : flattenValueTree.keySet()) {
-                    metricValues.put(
-                            GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false) + "."
-                            + GraphiteClient.sanitizeMetricName(internalMetricName, /*keepDot*/ false),
-                            flattenValueTree.get(internalMetricName));
-                }
-            } else {
-                if (value instanceof Number) {
-                    metricValues.put(GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false), (Number) value);
-                }
-            }
-        }
-        return metricValues;
-    }
-
 
     public static class JolokiaClientPollingFailure extends RuntimeException {
 
