@@ -1,24 +1,10 @@
 package io.logz.jmx2graphite;
 
-import com.google.common.base.Throwables;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import org.quartz.JobDetail;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.Trigger;
-import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import static org.quartz.JobBuilder.newJob;
-import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
-import static org.quartz.TriggerBuilder.newTrigger;
 
 /**
  * @author amesika

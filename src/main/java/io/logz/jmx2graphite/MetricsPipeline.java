@@ -1,24 +1,17 @@
 package io.logz.jmx2graphite;
 
 import com.google.common.base.Stopwatch;
-import com.google.inject.Inject;
-import org.quartz.DisallowConcurrentExecution;
-import org.quartz.Job;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * @author amesika
  */
-@DisallowConcurrentExecution
+
 public class MetricsPipeline {
     private static final Logger logger = LoggerFactory.getLogger(MetricsPipeline.class);
 
