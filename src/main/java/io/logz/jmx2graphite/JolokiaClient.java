@@ -43,7 +43,7 @@ public class JolokiaClient extends MBeanClient {
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
     }
 
-    public List<MetricBean> getBeans() throws JolokiaClientPollingFailure {
+    public List<MetricBean> getBeans() throws MBeanClientPollingFailure {
         try {
             stopwatch.reset().start();
             logger.debug("Retrieving /list of bean from Jolokia ({})...", jolokiaFullURL);
@@ -63,11 +63,11 @@ public class JolokiaClient extends MBeanClient {
             }
             return extractMetricsBeans(domains);
         } catch (URISyntaxException  | IOException e) {
-            throw new JolokiaClientPollingFailure("Failed retrieving list of beans from Jolokia. Error = "+e.getMessage(), e);
+            throw new MBeanClientPollingFailure("Failed retrieving list of beans from Jolokia. Error = "+e.getMessage(), e);
         }
     }
 
-    public List<MetricValue> getMetrics(List<MetricBean> beans) throws JolokiaClientPollingFailure {
+    public List<MetricValue> getMetrics(List<MetricBean> beans) throws MBeanClientPollingFailure {
         List<JolokiaReadRequest> readRequests = Lists.newArrayList();
         for (MetricBean bean : beans) {
             readRequests.add(new JolokiaReadRequest(bean.getName(), bean.getAttributes()));
@@ -119,14 +119,51 @@ public class JolokiaClient extends MBeanClient {
             }
             return metricValues;
         } catch (IOException e) {
-            throw new JolokiaClientPollingFailure("Failed reading beans from Jolokia. Error = "+e.getMessage(), e);
+            throw new MBeanClientPollingFailure("Failed reading beans from Jolokia. Error = "+e.getMessage(), e);
         }
     }
 
-    public static class JolokiaClientPollingFailure extends RuntimeException {
-
-        public JolokiaClientPollingFailure(String message, Throwable cause) {
-            super(message, cause);
+    private List<MetricBean> extractMetricsBeans(Map<String, Object> domains) {
+        List<MetricBean> result = Lists.newArrayList();
+        for (String domainName : domains.keySet()) {
+            Map<String, Object> domain = (Map<String, Object>) domains.get(domainName);
+            for (String mbeanName : domain.keySet()) {
+                Map<String, Object> mbean = (Map<String, Object>) domain.get(mbeanName);
+                Map<String, Object> attributes = (Map<String, Object>) mbean.get("attr");
+                if (attributes != null) {
+                    List<String> attrNames = new ArrayList<String>(attributes.keySet());
+                    result.add(new MetricBean(domainName + ":" + mbeanName, attrNames));
+                }
+            }
         }
+        return result;
+    }
+
+    private static Map<String, Number> flatten(Map<String, Object> attrValues) {
+        try {
+            Map<String, Number> metricValues = Maps.newHashMap();
+            for (String key : attrValues.keySet()) {
+                Object value = attrValues.get(key);
+                if (value instanceof Map) {
+                    Map<String, Number> flattenValueTree = flatten((Map) value);
+
+                    for (String internalMetricName : flattenValueTree.keySet()) {
+                        metricValues.put(
+                                GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false) + "."
+                                        + GraphiteClient.sanitizeMetricName(internalMetricName, /*keepDot*/ false),
+                                flattenValueTree.get(internalMetricName));
+                    }
+                } else {
+                    if (value instanceof Number) {
+                        metricValues.put(GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false), (Number) value);
+                    }
+                }
+            }
+            return metricValues;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

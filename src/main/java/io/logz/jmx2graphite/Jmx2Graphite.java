@@ -38,7 +38,7 @@ public class Jmx2Graphite {
         logger.info("Shutting down...");
         try {
             taskScheduler.shutdown();
-            taskScheduler.awaitTermination(20, TimeUnit.SECONDS);
+            taskScheduler.awaitTermination(20, TimeUnit.HOURS);  //TODO: secodns
             taskScheduler.shutdownNow();
         } catch (InterruptedException e) {
 

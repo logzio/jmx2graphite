@@ -40,17 +40,20 @@ public class MetricsPipeline {
                     sw.stop().elapsed(TimeUnit.MILLISECONDS),
                     new Date(TimeUnit.SECONDS.toMillis(pollingWindowStartSeconds)));
 
+            beans.forEach(b -> logger.trace("{}", b));
+
+
             sw.reset().start();
             List<MetricValue> metrics = client.getMetrics(beans);
             logger.info("metrics fetched. Time: {} ms; Metrics: {}", sw.stop().elapsed(TimeUnit.MILLISECONDS), metrics.size());
             if (logger.isTraceEnabled()) printToFile(metrics);
             return changeTimeTo(pollingWindowStartSeconds, metrics);
 
-        } catch (JolokiaClient.JolokiaClientPollingFailure e) {
+        } catch (MBeanClient.MBeanClientPollingFailure e) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Failed polling metrics from Jolokia: " + e.getMessage(), e);
+                logger.debug("Failed polling metrics from client ({}): {}", client.getClass().toString(), e.getMessage(), e);
             } else {
-                logger.warn("Failed polling metrics from Jolokia: " + e.getMessage());
+                logger.warn("Failed polling metrics from client ({}): {}", client.getClass().toString(), e.getMessage());
             }
 
             return null;
