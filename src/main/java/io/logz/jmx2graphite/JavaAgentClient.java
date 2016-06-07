@@ -48,7 +48,8 @@ public class JavaAgentClient extends MBeanClient {
                     attributes.add(attribute.getName());
                 }
 
-                metricBeans.add(new MetricBean(instance.getObjectName().getCanonicalName(), attributes));
+                // Dont change to getCanonicalName(), we need it to preserve the order so we can have a valuable metrics tree
+                metricBeans.add(new MetricBean(instance.getObjectName().getDomain() + ":" + instance.getObjectName().getKeyPropertyListString(), attributes));
             }
             return metricBeans;
 
