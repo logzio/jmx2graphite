@@ -64,6 +64,8 @@ public class GraphiteClient implements Closeable {
                 sb.append('_');
             } else if (c == '"') {
                 // Removing it
+            } else if (c == ' ') {
+                sb.append('-');
             } else {
                 sb.append(c);
             }

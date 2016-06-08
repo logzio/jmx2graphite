@@ -31,7 +31,7 @@ public class Jmx2Graphite {
         enableHangupSupport();
 
         MetricsPipeline pipeline = new MetricsPipeline(conf, client);
-        taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.intervalInSeconds, TimeUnit.HOURS);  //TODO: seconds
+        taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.intervalInSeconds, TimeUnit.SECONDS);
     }
 
     public void shutdown() {
