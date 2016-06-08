@@ -18,9 +18,10 @@ public class TempTest {
         jmx2GraphiteConfiguration.graphiteHostname = "graphite.staging.us-east-1.internal.logz.io";
         jmx2GraphiteConfiguration.graphitePort = 2004;
         jmx2GraphiteConfiguration.jolokiaUrl = "http://172.31.0.35:11001";
-        jmx2GraphiteConfiguration.serviceName = "RoiTest";
+        jmx2GraphiteConfiguration.serviceName = "RoiTestJavaAgent";
 
-        MBeanClient jolokiaClient = new JolokiaClient(jmx2GraphiteConfiguration.jolokiaUrl);
+        //MBeanClient jolokiaClient = new JolokiaClient(jmx2GraphiteConfiguration.jolokiaUrl);
+        MBeanClient jolokiaClient = new JavaAgentClient();
 
         Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration, jolokiaClient);
         main.run();

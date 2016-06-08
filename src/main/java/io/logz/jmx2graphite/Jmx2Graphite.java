@@ -31,14 +31,14 @@ public class Jmx2Graphite {
         enableHangupSupport();
 
         MetricsPipeline pipeline = new MetricsPipeline(conf, client);
-        taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.intervalInSeconds, TimeUnit.SECONDS);
+        taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.intervalInSeconds, TimeUnit.HOURS);  //TODO: seconds
     }
 
     public void shutdown() {
         logger.info("Shutting down...");
         try {
             taskScheduler.shutdown();
-            taskScheduler.awaitTermination(20, TimeUnit.HOURS);  //TODO: secodns
+            taskScheduler.awaitTermination(20, TimeUnit.SECONDS);
             taskScheduler.shutdownNow();
         } catch (InterruptedException e) {
 

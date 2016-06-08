@@ -10,6 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.management.*;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeType;
+import javax.management.openmbean.TabularData;
 import java.lang.management.ManagementFactory;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -99,12 +102,40 @@ public class JavaAgentClient extends MBeanClient {
 
         Map<String, Number> metricValues = Maps.newHashMap();
         for (String key : attrValues.keySet()) {
+
             Object value = attrValues.get(key);
 
-            if (value instanceof Number) {
-                metricValues.put(GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false), (Number) value);
+            if (value == null) {
+                continue;
             }
-            else if (!(value instanceof String) && !(value instanceof Boolean) && value != null) {
+
+            if (value.getClass().isArray()) {
+                continue;
+            } else if (value instanceof Number) {
+                metricValues.put(GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false), (Number) value);
+            } else if (value instanceof CompositeData) {
+
+                CompositeData data = (CompositeData) value;
+
+                Map<String, Object> valueMap = new HashMap<>();
+
+                data.getCompositeType().keySet().forEach(compositeKey -> {
+                    valueMap.put(compositeKey, data.get(compositeKey));
+                });
+
+                metricValues.putAll(prependKey(key, flatten(valueMap)));
+            } else if (value instanceof TabularData) {
+                TabularData tabularData = (TabularData) value;
+                CompositeType rowType = tabularData.getTabularType().getRowType();
+                tabularData.values().forEach(row -> {
+                    Map<String, Object> rowAsMap = new HashMap<>();
+                    CompositeData rowData = (CompositeData) row;
+                    rowType.keySet().forEach(fieldName -> rowAsMap.put(fieldName, rowData.get(fieldName)));
+
+                    metricValues.putAll(prependKey(key, flatten(rowAsMap)));
+                });
+            } else if (!(value instanceof String) && !(value instanceof Boolean) && value != null) {
+                logger.trace("key '{}' type={}", key, value.getClass().getName());
                 Map<String, Object> valueMap;
                 try {
                     valueMap = objectMapper.convertValue(value, new TypeReference<Map<String, Object>>() {});
@@ -112,16 +143,20 @@ public class JavaAgentClient extends MBeanClient {
                     logger.trace("Can't convert attribute named {} with class type {}", key, value.getClass().getCanonicalName());
                     continue;
                 }
-                Map<String, Number> flattenValueTree = flatten(valueMap);
-
-                for (String internalMetricName : flattenValueTree.keySet()) {
-                    metricValues.put(
-                            GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false) + "."
-                                    + GraphiteClient.sanitizeMetricName(internalMetricName, /*keepDot*/ false),
-                            flattenValueTree.get(internalMetricName));
-                }
+                metricValues.putAll(prependKey(key, flatten(valueMap)));
             }
         }
         return metricValues;
+    }
+
+    public Map<String, Number> prependKey(String key, Map<String, Number> keyToNumber) {
+        Map<String, Number> result = new HashMap<>();
+        for (String internalMetricName : keyToNumber.keySet()) {
+            result.put(
+                    GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false) + "."
+                            + GraphiteClient.sanitizeMetricName(internalMetricName, /*keepDot*/ false),
+                    keyToNumber.get(internalMetricName));
+        }
+        return result;
     }
 }

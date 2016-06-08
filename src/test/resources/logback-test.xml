@@ -17,7 +17,7 @@
         </filter>
     </appender>
 
-    <logger name="io.logz.jmx2graphite" level="INFO"/>
+    <logger name="io.logz.jmx2graphite" level="TRACE"/>
     <!--<logger name="com.nurkiewicz.asyncretry" level="TRACE"/>-->
     <root level="INFO">
         <appender-ref ref="default.console"/>

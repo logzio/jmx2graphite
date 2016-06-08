@@ -29,6 +29,13 @@ public class Jmx2GraphiteConfiguration {
     public int graphiteSocketTimeout;
     private int graphiteWriteTimeoutMs;
 
+    //private final MetricClientType metricClientType;
+
+    public enum MetricClientType {
+        JOLOKIA,
+        MBEAN_PLATFORM
+    }
+
     public Jmx2GraphiteConfiguration(Config config) throws IllegalConfiguration {
         jolokiaUrl = config.getString("service.jolokiaUrl");
         String jolokiaHost;
@@ -70,6 +77,7 @@ public class Jmx2GraphiteConfiguration {
         this.graphiteSocketTimeout = graphiteSocketTimeout;
         this.graphiteWriteTimeoutMs = graphiteWriteTimeoutMs;
     }
+
 
     public int getGraphiteConnectTimeout() {
         return graphiteConnectTimeout;

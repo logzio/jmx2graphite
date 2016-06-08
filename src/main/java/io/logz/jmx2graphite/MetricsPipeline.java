@@ -62,9 +62,8 @@ public class MetricsPipeline {
 
     public void pollAndSend()  {
 
-        List<MetricValue> metrics = poll();
-
         try {
+            List<MetricValue> metrics = poll();
             Stopwatch sw = Stopwatch.createStarted();
             sw.reset().start();
             sendToGraphite(metrics);
@@ -78,6 +77,9 @@ public class MetricsPipeline {
             } else {
                 logger.warn("Failed writing to Graphite: " + e.getMessage());
             }
+        } catch (Throwable t) {
+            logger.error("Unexpected error occured while polling and sending. Error = {}", t.getMessage(), t);
+            // not throwing out since the scheduler will stop in any exception
         }
     }
 
