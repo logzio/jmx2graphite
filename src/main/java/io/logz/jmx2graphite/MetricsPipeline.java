@@ -24,11 +24,11 @@ public class MetricsPipeline {
 
     public MetricsPipeline(Jmx2GraphiteConfiguration conf, MBeanClient client) {
 
-        this.graphiteClient = new GraphiteClient(conf.serviceHost, conf.serviceName, conf.graphiteHostname,
-                                                 conf.graphitePort, conf.getGraphiteConnectTimeout(),
-                                                 conf.graphiteSocketTimeout, conf.getGraphiteWriteTimeoutMs());
+        this.graphiteClient = new GraphiteClient(conf.getServiceHost(), conf.getServiceName(), conf.getGraphiteHostname(),
+                                                 conf.getGraphitePort(), conf.getGraphiteConnectTimeout(),
+                                                 conf.getGraphiteSocketTimeout(), conf.getGraphiteWriteTimeoutMs());
         this.client = client;
-        this.pollingIntervalSeconds = conf.intervalInSeconds;
+        this.pollingIntervalSeconds = conf.getIntervalInSeconds();
     }
 
     private List<MetricValue> poll() {
@@ -83,19 +83,19 @@ public class MetricsPipeline {
         }
     }
 
-    protected long getPollingWindowStartSeconds() {
+    private long getPollingWindowStartSeconds() {
         long now = System.currentTimeMillis();
         long pollingIntervalMs = TimeUnit.SECONDS.toMillis(pollingIntervalSeconds);
         return TimeUnit.MILLISECONDS.toSeconds(now - (now % pollingIntervalMs));
     }
 
-    protected void printToFile(List<MetricValue> metrics) {
+    private void printToFile(List<MetricValue> metrics) {
         for (MetricValue v : metrics) {
             logger.trace(v.toString());
         }
     }
 
-    protected List<MetricValue> changeTimeTo(long newTime, List<MetricValue> metrics) {
+    private List<MetricValue> changeTimeTo(long newTime, List<MetricValue> metrics) {
         return metrics.stream()
                 .map(m -> new MetricValue(m.getName(), m.getValue(), newTime))
                 .collect(Collectors.toList());

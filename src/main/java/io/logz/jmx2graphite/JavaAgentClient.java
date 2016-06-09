@@ -10,16 +10,7 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.AttributeList;
-import javax.management.InstanceNotFoundException;
-import javax.management.IntrospectionException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanInfo;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
+import javax.management.*;
 import javax.management.openmbean.CompositeData;
 import javax.management.openmbean.TabularData;
 import java.lang.management.ManagementFactory;
@@ -121,32 +112,23 @@ public class JavaAgentClient extends MBeanClient {
                 continue;
             }
 
-            if (value.getClass().isArray()) {
-                continue;
-            } else if (value instanceof Number) {
+            if (value.getClass().isArray()) continue;
+            else if (value instanceof Number) {
                 metricValues.put(GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false), (Number) value);
             } else if (value instanceof CompositeData) {
 
                 CompositeData data = (CompositeData) value;
-
-                Map<String, Object> valueMap = new HashMap<>();
-
-                data.getCompositeType().keySet().forEach(compositeKey -> {
-                    valueMap.put(compositeKey, data.get(compositeKey));
-                });
-
+                Map<String, Object> valueMap = handleCompositeData(data);
                 metricValues.putAll(prependKey(key, flatten(valueMap)));
-            } else if (value instanceof TabularData) {
-                TabularData tabularData = (TabularData) value;
-                Map<String, Object> rowKeyToRowData = new HashMap<>();
 
-                tabularData.keySet().forEach(rowKey -> {
-                    List<?> rowKeyAsList = (List<?>) rowKey;
-                    rowKeyToRowData.put(createKey(rowKeyAsList), tabularData.get(rowKeyAsList.toArray()));
-                });
+            } else if (value instanceof TabularData) {
+
+                TabularData tabularData = (TabularData) value;
+                Map<String, Object> rowKeyToRowData = handleTabularData(tabularData);
                 metricValues.putAll(prependKey(key, flatten(rowKeyToRowData)));
+
             } else if (!(value instanceof String) && !(value instanceof Boolean)) {
-                logger.trace("key '{}' type={}", key, value.getClass().getName());
+
                 Map<String, Object> valueMap;
                 try {
                     valueMap = objectMapper.convertValue(value, new TypeReference<Map<String, Object>>() {});
@@ -154,17 +136,37 @@ public class JavaAgentClient extends MBeanClient {
                     logger.trace("Can't convert attribute named {} with class type {}", key, value.getClass().getCanonicalName());
                     continue;
                 }
+
                 metricValues.putAll(prependKey(key, flatten(valueMap)));
             }
         }
         return metricValues;
     }
 
+    private Map<String, Object> handleTabularData(TabularData tabularData) {
+        Map<String, Object> rowKeyToRowData = new HashMap<>();
+
+        tabularData.keySet().forEach(rowKey -> {
+            List<?> rowKeyAsList = (List<?>) rowKey;
+            rowKeyToRowData.put(createKey(rowKeyAsList), tabularData.get(rowKeyAsList.toArray()));
+        });
+        return rowKeyToRowData;
+    }
+
+    private Map<String, Object> handleCompositeData(CompositeData data) {
+        Map<String, Object> valueMap = new HashMap<>();
+
+        data.getCompositeType().keySet().forEach(compositeKey -> {
+            valueMap.put(compositeKey, data.get(compositeKey));
+        });
+        return valueMap;
+    }
+
     private String createKey(List<?> rowKeyAsList) {
         return Joiner.on('_').join(rowKeyAsList);
     }
 
-    public Map<String, Number> prependKey(String key, Map<String, Number> keyToNumber) {
+    private Map<String, Number> prependKey(String key, Map<String, Number> keyToNumber) {
         Map<String, Number> result = new HashMap<>();
         for (String internalMetricName : keyToNumber.keySet()) {
             String resultKey;

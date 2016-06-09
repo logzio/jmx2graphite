@@ -9,11 +9,10 @@ import com.typesafe.config.ConfigFactory;
 public class Jmx2GraphiteJolokia {
 
     public static void main(String[] args) {
-        Config config = ConfigFactory.load();
-        Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(config);
-        MBeanClient jolokiaClient = new JolokiaClient(jmx2GraphiteConfiguration.jolokiaUrl);
 
-        Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration, jolokiaClient);
+        Config config = ConfigFactory.load();
+        Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(config, Jmx2GraphiteConfiguration.MetricClientType.JOLOKIA);
+        Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration);
         main.run();
     }
 }

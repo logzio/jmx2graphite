@@ -14,18 +14,16 @@ public class TempTest {
     public static void main(String[] args) {
 
         Config config = ConfigFactory.load();
-        Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(config);
+        Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(config, Jmx2GraphiteConfiguration.MetricClientType.MBEAN_PLATFORM);
 
-        jmx2GraphiteConfiguration.graphiteHostname = "graphite.staging.us-east-1.internal.logz.io";
-        jmx2GraphiteConfiguration.graphitePort = 2004;
-        jmx2GraphiteConfiguration.jolokiaUrl = "http://172.31.0.35:11001";
-        jmx2GraphiteConfiguration.serviceName = "RoiTestJavaAgent";
-        jmx2GraphiteConfiguration.intervalInSeconds = 10;
+        jmx2GraphiteConfiguration.setGraphiteHostname("graphite.staging.us-east-1.internal.logz.io");
+        jmx2GraphiteConfiguration.setGraphitePort(2004);
+        jmx2GraphiteConfiguration.setJolokiaUrl("http://172.31.0.35:11001");
+        jmx2GraphiteConfiguration.setServiceName("RoiTestJavaAgent");
+        jmx2GraphiteConfiguration.setIntervalInSeconds(10);
 
-        //MBeanClient jolokiaClient = new JolokiaClient(jmx2GraphiteConfiguration.jolokiaUrl);
-        MBeanClient jolokiaClient = new JavaAgentClient();
+        Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration);
 
-        Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration, jolokiaClient);
         List<String> s = new ArrayList<>();
         for (int i = 0; i < 1000000; i++) {
             s.add("ejrwkejrwlekrj elkrjw elrkj welkrj wlekjr wlekjr wlkejr lwkejr w"+i);
@@ -35,8 +33,6 @@ public class TempTest {
         System.gc();
         System.gc();
         main.run();
-
-
     }
 
 }

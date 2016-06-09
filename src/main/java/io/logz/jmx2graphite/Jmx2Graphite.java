@@ -17,21 +17,27 @@ public class Jmx2Graphite {
     private ScheduledThreadPoolExecutor taskScheduler;
     private MBeanClient client;
 
-    public Jmx2Graphite(Jmx2GraphiteConfiguration conf, MBeanClient client) {
+    public Jmx2Graphite(Jmx2GraphiteConfiguration conf) {
         this.conf = conf;
         this.taskScheduler = new ScheduledThreadPoolExecutor(1);
-        this.client = client;
+
+        if (conf.getMetricClientType() == Jmx2GraphiteConfiguration.MetricClientType.JOLOKIA) {
+            this.client = new JolokiaClient(conf.getJolokiaUrl());
+
+        } else if (conf.getMetricClientType() == Jmx2GraphiteConfiguration.MetricClientType.MBEAN_PLATFORM) {
+            this.client = new JavaAgentClient();
+        }
     }
 
     public void run() {
 
-        logger.info("Running with Jolokia URL: "+conf.jolokiaUrl);
-        logger.info("Graphite: host = "+conf.graphiteHostname +", port = "+conf.graphitePort);
+        logger.info("Running with Jolokia URL: {}", conf.getJolokiaUrl());
+        logger.info("Graphite: host = {}, port = {}", conf.getGraphiteHostname(), conf.getGraphitePort());
 
         enableHangupSupport();
 
         MetricsPipeline pipeline = new MetricsPipeline(conf, client);
-        taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.intervalInSeconds, TimeUnit.SECONDS);
+        taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.getIntervalInSeconds(), TimeUnit.SECONDS);
     }
 
     public void shutdown() {
