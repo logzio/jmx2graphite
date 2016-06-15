@@ -230,7 +230,10 @@ docker push logzio/jmx2graphite
 
 
 # Changelog
-
+- v1.1.0
+  - Major refactoring - Supporting different agents but jolokia
+  - Added java agent capabilities, through MBeans Platform
+  - Changed logback to log4j
 - v1.0.8
   - First migration step to Kotlin language
 - v1.0.7
