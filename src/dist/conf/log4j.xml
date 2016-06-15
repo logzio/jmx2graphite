@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration>
+    <appender name="default.console" class="org.apache.log4j.ConsoleAppender">
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern"
+                   value="%d{yy/MM/dd HH:mm:ss} %p %c{2}: %m%n" />
+        </layout>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+
+    <appender name="default.file" class="org.apache.log4j.RollingFileAppender">
+        <param name="append" value="true" />
+        <param name="maxFileSize" value="10MB" />
+        <param name="maxBackupIndex" value="7" />
+        <param name="file" value="/var/log/jmx2graphite/jmx2graphite.log" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern"
+                   value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n" />
+        </layout>
+    </appender>
+
+    <!-- Enable this line to get a list of metric sent to Graphite -->
+    <!--
+    <logger name="io.logz.jmx2graphite.MetricsPipelinene" level="TRACE"/>
+    -->
+
+    <logger name="io.logz.jmx2graphite" level="INFO"/>
+
+    <root>
+        <level value="DEBUG" />
+        <appender-ref ref="default.console"/>
+        <appender-ref ref="default.file" />
+    </root>
+</log4j:configuration>

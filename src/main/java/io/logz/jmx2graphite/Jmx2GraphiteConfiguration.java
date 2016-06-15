@@ -64,7 +64,7 @@ public class Jmx2GraphiteConfiguration {
 
         } else if (this.metricClientType == MetricClientType.MBEAN_PLATFORM) {
 
-            // Try to find hostname as defualt to serviceHost in case it was not provided
+            // Try to find hostname as default to serviceHost in case it was not provided
             if (serviceHost == null) {
                 try {
                     serviceHost = InetAddress.getLocalHost().getHostName();

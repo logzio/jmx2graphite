@@ -19,6 +19,7 @@ public class Jmx2Graphite {
 
     public Jmx2Graphite(Jmx2GraphiteConfiguration conf) {
         this.conf = conf;
+
         this.taskScheduler = new ScheduledThreadPoolExecutor(1);
 
         if (conf.getMetricClientType() == Jmx2GraphiteConfiguration.MetricClientType.JOLOKIA) {
@@ -31,7 +32,12 @@ public class Jmx2Graphite {
 
     public void run() {
 
-        logger.info("Running with Jolokia URL: {}", conf.getJolokiaUrl());
+        if (conf.getMetricClientType() == Jmx2GraphiteConfiguration.MetricClientType.JOLOKIA) {
+            logger.info("Running with Jolokia URL: {}", conf.getJolokiaUrl());
+        }
+        else if (conf.getMetricClientType() == Jmx2GraphiteConfiguration.MetricClientType.MBEAN_PLATFORM) {
+            logger.info("Running with Mbean client");
+        }
         logger.info("Graphite: host = {}, port = {}", conf.getGraphiteHostname(), conf.getGraphitePort());
 
         enableHangupSupport();
@@ -40,7 +46,7 @@ public class Jmx2Graphite {
         taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.getIntervalInSeconds(), TimeUnit.SECONDS);
     }
 
-    public void shutdown() {
+    private void shutdown() {
         logger.info("Shutting down...");
         try {
             taskScheduler.shutdown();
@@ -57,7 +63,7 @@ public class Jmx2Graphite {
      * Enables the hangup support. Gracefully stops by calling shutdown() on a
      * Hangup signal.
      */
-    public void enableHangupSupport() {
+    private void enableHangupSupport() {
         HangupInterceptor interceptor = new HangupInterceptor(this);
         Runtime.getRuntime().addShutdownHook(interceptor);
     }

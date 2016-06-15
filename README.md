@@ -69,7 +69,13 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 10. If you wish to run this as a service you need to create a service wrapper for it. Any pull requests for making it are welcome! If it's possible running it as docker making it simpler.
 
    
-
+## As Java Agent
+This lib can also get the metrics from MBean Platform instead of jolokia. In order to do so, we need to run inside the JVM.
+- First, get the java agent jar from the releases page
+- Attach to your jar:  java -javaagent:jmx2graphite-1.1.0-javaagent.jar=GRAPHITE_HOSTNAME=graphite.host;SERVICE_NAME=Myservice ...
+- The parameters are key-value pairs, in the format of key=value;key=value;...
+- The parameters names and functions are exactly as described above. (Except no need to specify JOLOKIA_URL of course)
+- The Jar produces for java agent is an "Uber-Jar" that shades all of its dependencies inside
    
 
 # How to expose JMX Metrics using Jolokia Agent
@@ -210,6 +216,10 @@ We welcome any contribution! You can help in the following way:
 ```
 ./gradlew build
 docker build -t logzio/jmx2graphite .
+```
+Build Java Agent
+```
+./gradlew build javaAgent
 ```
 
 # Deploy
