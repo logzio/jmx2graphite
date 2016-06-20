@@ -31,7 +31,7 @@
     <logger name="io.logz.jmx2graphite" level="INFO"/>
 
     <root>
-        <level value="DEBUG" />
+        <level value="INFO" />
         <appender-ref ref="default.console"/>
         <appender-ref ref="default.file" />
     </root>

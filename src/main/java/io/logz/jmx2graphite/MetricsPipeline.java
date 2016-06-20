@@ -28,7 +28,7 @@ public class MetricsPipeline {
                                                  conf.getGraphitePort(), conf.getGraphiteConnectTimeout(),
                                                  conf.getGraphiteSocketTimeout(), conf.getGraphiteWriteTimeoutMs());
         this.client = client;
-        this.pollingIntervalSeconds = conf.getIntervalInSeconds();
+        this.pollingIntervalSeconds = conf.getMetricsPollingIntervalInSeconds();
     }
 
     private List<MetricValue> poll() {
@@ -39,9 +39,6 @@ public class MetricsPipeline {
             logger.info("Found {} metric beans. Time = {}ms, for {}", beans.size(),
                     sw.stop().elapsed(TimeUnit.MILLISECONDS),
                     new Date(TimeUnit.SECONDS.toMillis(pollingWindowStartSeconds)));
-
-            beans.forEach(b -> logger.trace("{}", b));
-
 
             sw.reset().start();
             List<MetricValue> metrics = client.getMetrics(beans);
@@ -55,7 +52,6 @@ public class MetricsPipeline {
             } else {
                 logger.warn("Failed polling metrics from client ({}): {}", client.getClass().toString(), e.getMessage());
             }
-
             return null;
         }
     }
@@ -65,7 +61,6 @@ public class MetricsPipeline {
         try {
             List<MetricValue> metrics = poll();
             Stopwatch sw = Stopwatch.createStarted();
-            sw.reset().start();
             sendToGraphite(metrics);
             logger.info("metrics sent to Graphite. Time: {} ms, Failed metrics: {}",
                     sw.stop().elapsed(TimeUnit.MILLISECONDS),

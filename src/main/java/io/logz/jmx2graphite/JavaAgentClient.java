@@ -28,12 +28,15 @@ public class JavaAgentClient extends MBeanClient {
 
     private static final Logger logger = LoggerFactory.getLogger(JavaAgentClient.class);
 
-    MBeanServer server;
-    ObjectMapper objectMapper;
+    private final MBeanServer server;
+    private final ObjectMapper objectMapper;
 
     public JavaAgentClient() {
 
         server = ManagementFactory.getPlatformMBeanServer();
+
+        // The visibility section here is to tell Jackson that we want it to get over all the object properties and not only the getters
+        // If we wont set it, then it will fetch only partial info from the MBean objects
         objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
         objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
@@ -68,6 +71,7 @@ public class JavaAgentClient extends MBeanClient {
     public List<MetricValue> getMetrics(List<MetricBean> beans) throws MBeanClientPollingFailure{
 
         List<MetricValue> metricValues = Lists.newArrayList();
+        long metricTime = LocalDate.now().atStartOfDay(ZoneId.of("UTC")).toEpochSecond();
 
         for (MetricBean metricBean : beans) {
             try {
@@ -82,15 +86,12 @@ public class JavaAgentClient extends MBeanClient {
 
                 for (String attrMetricName : metricToValue.keySet()) {
                     try {
-
-                        long metricTime = LocalDate.now().atStartOfDay(ZoneId.of("UTC")).toEpochSecond();
-
                         metricValues.add(new MetricValue(
                                 GraphiteClient.sanitizeMetricName(metricBean.getName(), /*keepDot*/ true) + "." + attrMetricName,
                                 metricToValue.get(attrMetricName),
                                 metricTime));
                     } catch (IllegalArgumentException e) {
-                        logger.info("Can't sent Metric since it's invalid: "+e.getMessage());
+                        logger.info("Failed converting metric name to Graphite-friendly name: metricsBean.getName = {}, attrMetricName = {}", metricBean.getName(), attrMetricName);
                     }
                 }
             } catch (MalformedObjectNameException | ReflectionException | InstanceNotFoundException | IllegalArgumentException e ) {
@@ -105,30 +106,22 @@ public class JavaAgentClient extends MBeanClient {
 
         Map<String, Number> metricValues = Maps.newHashMap();
         for (String key : attrValues.keySet()) {
-
             Object value = attrValues.get(key);
-
             if (value == null) {
                 continue;
             }
-
             if (value.getClass().isArray()) continue;
             else if (value instanceof Number) {
                 metricValues.put(GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false), (Number) value);
             } else if (value instanceof CompositeData) {
-
                 CompositeData data = (CompositeData) value;
                 Map<String, Object> valueMap = handleCompositeData(data);
                 metricValues.putAll(prependKey(key, flatten(valueMap)));
-
             } else if (value instanceof TabularData) {
-
                 TabularData tabularData = (TabularData) value;
                 Map<String, Object> rowKeyToRowData = handleTabularData(tabularData);
                 metricValues.putAll(prependKey(key, flatten(rowKeyToRowData)));
-
             } else if (!(value instanceof String) && !(value instanceof Boolean)) {
-
                 Map<String, Object> valueMap;
                 try {
                     valueMap = objectMapper.convertValue(value, new TypeReference<Map<String, Object>>() {});
@@ -136,7 +129,6 @@ public class JavaAgentClient extends MBeanClient {
                     logger.trace("Can't convert attribute named {} with class type {}", key, value.getClass().getCanonicalName());
                     continue;
                 }
-
                 metricValues.putAll(prependKey(key, flatten(valueMap)));
             }
         }

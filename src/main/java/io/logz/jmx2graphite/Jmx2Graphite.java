@@ -6,6 +6,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static io.logz.jmx2graphite.Jmx2GraphiteConfiguration.MetricClientType.JOLOKIA;
+import static io.logz.jmx2graphite.Jmx2GraphiteConfiguration.MetricClientType.MBEAN_PLATFORM;
+
 /**
  * @author amesika
  */
@@ -13,37 +16,33 @@ public class Jmx2Graphite {
 
     private static final Logger logger = LoggerFactory.getLogger(Jmx2Graphite.class);
 
-    private Jmx2GraphiteConfiguration conf;
-    private ScheduledThreadPoolExecutor taskScheduler;
-    private MBeanClient client;
+    private final Jmx2GraphiteConfiguration conf;
+    private final ScheduledThreadPoolExecutor taskScheduler;
+    private final MBeanClient client;
 
     public Jmx2Graphite(Jmx2GraphiteConfiguration conf) {
         this.conf = conf;
 
         this.taskScheduler = new ScheduledThreadPoolExecutor(1);
 
-        if (conf.getMetricClientType() == Jmx2GraphiteConfiguration.MetricClientType.JOLOKIA) {
-            this.client = new JolokiaClient(conf.getJolokiaUrl());
+        if (conf.getMetricClientType() == JOLOKIA) {
+            this.client = new JolokiaClient(conf.getJolokiaFullUrl());
+            logger.info("Running with Jolokia URL: {}", conf.getJolokiaFullUrl());
 
-        } else if (conf.getMetricClientType() == Jmx2GraphiteConfiguration.MetricClientType.MBEAN_PLATFORM) {
+        } else if (conf.getMetricClientType() == MBEAN_PLATFORM) {
             this.client = new JavaAgentClient();
+            logger.info("Running with Mbean client");
+        }
+        else {
+            throw new IllegalConfiguration("Unsupported client type: " + conf.getMetricClientType());
         }
     }
 
     public void run() {
-
-        if (conf.getMetricClientType() == Jmx2GraphiteConfiguration.MetricClientType.JOLOKIA) {
-            logger.info("Running with Jolokia URL: {}", conf.getJolokiaUrl());
-        }
-        else if (conf.getMetricClientType() == Jmx2GraphiteConfiguration.MetricClientType.MBEAN_PLATFORM) {
-            logger.info("Running with Mbean client");
-        }
         logger.info("Graphite: host = {}, port = {}", conf.getGraphiteHostname(), conf.getGraphitePort());
-
         enableHangupSupport();
-
         MetricsPipeline pipeline = new MetricsPipeline(conf, client);
-        taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.getIntervalInSeconds(), TimeUnit.SECONDS);
+        taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.getMetricsPollingIntervalInSeconds(), TimeUnit.SECONDS);
     }
 
     private void shutdown() {

@@ -2,7 +2,9 @@
 
 jmx2graphite is a one liner tool for polling JXM and writes into Graphite (every 30 seconds by default). You install & run it on every machine you want to poll its JMX.
 
-Currently it only reads JMX from a jolokia agent running on a JVM, since exposing JMX is the simplest and easiest through Jolokia agent (1 liner - see below).
+Currently it has two flavors.
+1. Reads JMX from a jolokia agent running on a JVM, since exposing JMX is the simplest and easiest through Jolokia agent (1 liner - see below).
+2. Run as a java agent, and get metrics directly from MBean Platform
 
 The reporting to graphite is done through the Pickle protocol, hence by default port 2004, since it's more efficient.
 
@@ -61,7 +63,7 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 5. Unzip it in any directory you'd like
 6. Move the directory jmx2graphite from ```opt/jmxgraphite``` to a location which fits you. Normally you would move it to ```/opt```
 7. Edit the configuration file at ```jmx2graphite/conf/application.conf```: The mandatory items are:
-   1. service/jolokiaUrl - Fill in the full URL to the JVM running Jolokia (It exposes your JMX as a REST service, normally under port 8778).
+   1. service/jolokiaFullUrl - Fill in the full URL to the JVM running Jolokia (It exposes your JMX as a REST service, normally under port 8778).
    2. service/name - The role name of the service.
    3. graphite/hostname  - Graphite host name the metrics will be sent to
 8. cd ```jmx2graphite/bin```
@@ -72,10 +74,10 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 ## As Java Agent
 This lib can also get the metrics from MBean Platform instead of jolokia. In order to do so, we need to run inside the JVM.
 - First, get the java agent jar from the releases page
-- Attach to your jar:  java -javaagent:jmx2graphite-1.1.0-javaagent.jar=GRAPHITE_HOSTNAME=graphite.host;SERVICE_NAME=Myservice ...
+- Modify your app JVM arguments and add the following:  java -javaagent:/path/to/jmx2graphite-1.1.0-javaagent.jar=GRAPHITE_HOSTNAME=graphite.host;SERVICE_NAME=Myservice ...
 - The parameters are key-value pairs, in the format of key=value;key=value;...
-- The parameters names and functions are exactly as described above. (Except no need to specify JOLOKIA_URL of course)
-- The Jar produces for java agent is an "Uber-Jar" that shades all of its dependencies inside
+- The parameters names and functions are exactly as described in Environment Variables section. (Except no need to specify JOLOKIA_URL of course)
+- The javaagent.jar is an "Uber-Jar" that shades all of its dependencies inside, to prevent class collisions
    
 
 # How to expose JMX Metrics using Jolokia Agent
@@ -231,7 +233,7 @@ docker push logzio/jmx2graphite
 
 # Changelog
 - v1.1.0
-  - Major refactoring - Supporting different agents but jolokia
+  - Major refactoring - jmx2graphite now comes in two flavor: standalone using docker as it was in 1.0.x, and as a Java Agent running alongside you app. This was done to support apps running using Docker in Mesos
   - Added java agent capabilities, through MBeans Platform
   - Changed logback to log4j
 - v1.0.8

@@ -15,10 +15,10 @@ public class Jmx2GraphiteJolokia {
     public static void main(String[] args) {
 
         Config config = ConfigFactory.load();
-        Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(config, Jmx2GraphiteConfiguration.MetricClientType.JOLOKIA);
+        Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(config);
         Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration);
 
-        logger.info("Initiated new jolokia based Jmx2Graphite instance");
+        logger.info("Starting jmx2graphite using Jolokia-based poller");
         main.run();
     }
 }

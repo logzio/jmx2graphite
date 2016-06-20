@@ -140,30 +140,24 @@ public class JolokiaClient extends MBeanClient {
     }
 
     private static Map<String, Number> flatten(Map<String, Object> attrValues) {
-        try {
-            Map<String, Number> metricValues = Maps.newHashMap();
-            for (String key : attrValues.keySet()) {
-                Object value = attrValues.get(key);
-                if (value instanceof Map) {
-                    Map<String, Number> flattenValueTree = flatten((Map) value);
+        Map<String, Number> metricValues = Maps.newHashMap();
+        for (String key : attrValues.keySet()) {
+            Object value = attrValues.get(key);
+            if (value instanceof Map) {
+                Map<String, Number> flattenValueTree = flatten((Map) value);
 
-                    for (String internalMetricName : flattenValueTree.keySet()) {
-                        metricValues.put(
-                                GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false) + "."
-                                        + GraphiteClient.sanitizeMetricName(internalMetricName, /*keepDot*/ false),
-                                flattenValueTree.get(internalMetricName));
-                    }
-                } else {
-                    if (value instanceof Number) {
-                        metricValues.put(GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false), (Number) value);
-                    }
+                for (String internalMetricName : flattenValueTree.keySet()) {
+                    metricValues.put(
+                            GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false) + "."
+                                    + GraphiteClient.sanitizeMetricName(internalMetricName, /*keepDot*/ false),
+                            flattenValueTree.get(internalMetricName));
+                }
+            } else {
+                if (value instanceof Number) {
+                    metricValues.put(GraphiteClient.sanitizeMetricName(key, /*keepDot*/ false), (Number) value);
                 }
             }
-            return metricValues;
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-
-        return null;
+        return metricValues;
     }
 }

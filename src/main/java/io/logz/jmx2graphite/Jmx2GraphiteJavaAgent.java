@@ -1,5 +1,6 @@
 package io.logz.jmx2graphite;
 
+import com.google.common.base.Splitter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
@@ -18,9 +19,9 @@ public class Jmx2GraphiteJavaAgent {
 
     public static void premain(String agentArgument, Instrumentation instrumentation) {
 
-        logger.info("Got agentArgument string: {}", agentArgument);
+        logger.info("Loading with agentArgument: {}", agentArgument);
 
-        Map<String, String> configurationMap = getConfigurationMap(agentArgument);
+        Map<String, String> configurationMap = parseArgumentsString(agentArgument);
 
         if (configurationMap.get(getArgumentConfigurationRepresentation("GRAPHITE_HOSTNAME")) == null) {
             throw new IllegalConfiguration("GRAPHITE_HOSTNAME must be one of the arguments");
@@ -35,8 +36,7 @@ public class Jmx2GraphiteJavaAgent {
         // Merge the two configurations
         Config finalConfig = userConfig.withFallback(fileConfig);
 
-        Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(finalConfig,
-                Jmx2GraphiteConfiguration.MetricClientType.MBEAN_PLATFORM);
+        Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(finalConfig);
 
         Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration);
         logger.info("Initiated new java agent based Jmx2Graphite instance");
@@ -46,29 +46,20 @@ public class Jmx2GraphiteJavaAgent {
 
           // Catching anything, because if we throw exception here, it will stop the main thread as well.
         } catch (Throwable e) {
-            logger.error("Swallowed exception, not throwing anything but stop working.", e);
+            logger.error("Stopping jmx2graphite Java Agent due to unexpected exception: "+e.getMessage(), e);
         }
     }
 
-    private static Map<String, String> getConfigurationMap(String arguments) throws IllegalConfiguration {
-
+    private static Map<String, String> parseArgumentsString(String arguments) throws IllegalConfiguration {
         try {
-
             Map<String, String> argumentsMap = new HashMap<>();
-            for (String argument : arguments.split(";")) {
+            Map<String, String> keyValues = Splitter.on(';').omitEmptyStrings().withKeyValueSeparator('=').split(arguments);
 
-                // If the string ended with ;
-                if (argument.equals("")) {
-                    continue;
-                }
-
-                argumentsMap.put(getArgumentConfigurationRepresentation(argument.split("=")[0]),
-                                 argument.split("=")[1]);
-            }
+            keyValues.forEach((k,v) -> argumentsMap.put(getArgumentConfigurationRepresentation(k),v));
 
             return argumentsMap;
 
-        } catch (ArrayIndexOutOfBoundsException e) {
+        } catch (IllegalArgumentException e) {
             throw new IllegalConfiguration("Java agent arguments must be in form of: key=value;key=value");
         }
     }
