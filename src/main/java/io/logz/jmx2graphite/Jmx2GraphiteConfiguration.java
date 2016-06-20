@@ -55,7 +55,7 @@ public class Jmx2GraphiteConfiguration {
         }
 
         if (this.metricClientType == MetricClientType.JOLOKIA) {
-            jolokiaFullUrl = config.getString("service.jolokiaFullUrl");
+            jolokiaFullUrl = config.getString("service.poller.jolokia.jolokiaFullUrl");
             String jolokiaHost;
             try {
                 URL jolokia = new URL(jolokiaFullUrl);

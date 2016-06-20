@@ -91,7 +91,7 @@ public class JavaAgentClient extends MBeanClient {
                                 metricToValue.get(attrMetricName),
                                 metricTime));
                     } catch (IllegalArgumentException e) {
-                        logger.info("Failed converting metric name to Graphite-friendly name: metricsBean.getName = {}, attrMetricName = {}", metricBean.getName(), attrMetricName);
+                        logger.info("Failed converting metric name to Graphite-friendly name: metricsBean.getName = {}, attrMetricName = {}", metricBean.getName(), attrMetricName, e);
                     }
                 }
             } catch (MalformedObjectNameException | ReflectionException | InstanceNotFoundException | IllegalArgumentException e ) {

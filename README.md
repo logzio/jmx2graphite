@@ -2,8 +2,8 @@
 
 jmx2graphite is a one liner tool for polling JXM and writes into Graphite (every 30 seconds by default). You install & run it on every machine you want to poll its JMX.
 
-Currently it has two flavors.
-1. Reads JMX from a jolokia agent running on a JVM, since exposing JMX is the simplest and easiest through Jolokia agent (1 liner - see below).
+Currently it has two flavors:
+1. Docker image which reads JMX from a jolokia agent running on a JVM, since exposing JMX is the simplest and easiest through Jolokia agent (1 liner - see below).
 2. Run as a java agent, and get metrics directly from MBean Platform
 
 The reporting to graphite is done through the Pickle protocol, hence by default port 2004, since it's more efficient.
@@ -78,6 +78,7 @@ This lib can also get the metrics from MBean Platform instead of jolokia. In ord
 - The parameters are key-value pairs, in the format of key=value;key=value;...
 - The parameters names and functions are exactly as described in Environment Variables section. (Except no need to specify JOLOKIA_URL of course)
 - The javaagent.jar is an "Uber-Jar" that shades all of its dependencies inside, to prevent class collisions
+- For example: java -javaagent:/opt/jmx2graphite-1.1.0-javaagent.jar=GRAPHITE_HOSTNAME=graphite.example.com;SERVICE_NAME=PROD.MyAwesomeCategory example.jar
    
 
 # How to expose JMX Metrics using Jolokia Agent
@@ -233,7 +234,7 @@ docker push logzio/jmx2graphite
 
 # Changelog
 - v1.1.0
-  - Major refactoring - jmx2graphite now comes in two flavor: standalone using docker as it was in 1.0.x, and as a Java Agent running alongside you app. This was done to support apps running using Docker in Mesos
+  - Major refactoring - jmx2graphite now comes in two flavors: standalone using docker as it was in 1.0.x, and as a Java Agent running alongside you app. This is useful if your app is running inside Docker on Mesos and coupling it with another container just to read its metrics contradicts the Mesos paradigm.
   - Added java agent capabilities, through MBeans Platform
   - Changed logback to log4j
 - v1.0.8
