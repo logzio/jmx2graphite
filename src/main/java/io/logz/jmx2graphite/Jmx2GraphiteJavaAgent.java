@@ -75,8 +75,8 @@ public class Jmx2GraphiteJavaAgent {
                 return "service.name";
             case "SERVICE_HOST":
                 return "service.host";
-            case "INTERVAL_IN_SECONDS":
-                return "intervalInSeconds";
+            case "INTERVAL_IN_SEC":
+                return "metricsPollingIntervalInSeconds";
             case "GRAPHITE_CONNECT_TIMEOUT":
                 return "graphite.connectTimeout";
             case "GRAPHITE_SOCKET_TIMEOUT":
