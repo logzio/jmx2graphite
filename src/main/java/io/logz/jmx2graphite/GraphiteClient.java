@@ -19,7 +19,6 @@ public class GraphiteClient implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(GraphiteClient.class);
     private GraphiteSender graphite;
     private String metricsPrefix;
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
     private int failuresAtLastWrite = 0;
 
     public GraphiteClient(String serviceHost, String serviceName, String graphiteHostname, int graphitePort,
@@ -37,7 +36,7 @@ public class GraphiteClient implements Closeable {
             metricsPrefix = "";
         }
 
-        logger.info("Graphite metrics prefix: "+metricsPrefix);
+        logger.info("Graphite metrics prefix: {}", metricsPrefix);
         logger.info("Graphite Client: using writeTimeoutMs of {} [ms]. Establishing connection..." ,writeTimeoutMs);
 
         SocketFactory socketFactory = new SocketFactoryWithTimeouts(connectTimeout, socketTimeout);
@@ -64,6 +63,8 @@ public class GraphiteClient implements Closeable {
                 sb.append('_');
             } else if (c == '"') {
                 // Removing it
+            } else if (c == ' ') {
+                sb.append('-');
             } else {
                 sb.append(c);
             }

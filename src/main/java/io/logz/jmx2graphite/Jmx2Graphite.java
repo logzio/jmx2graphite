@@ -1,21 +1,13 @@
 package io.logz.jmx2graphite;
 
-import com.google.common.base.Throwables;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import org.quartz.JobDetail;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.Trigger;
-import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.quartz.JobBuilder.newJob;
-import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
-import static org.quartz.TriggerBuilder.newTrigger;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import static io.logz.jmx2graphite.Jmx2GraphiteConfiguration.MetricClientType.JOLOKIA;
+import static io.logz.jmx2graphite.Jmx2GraphiteConfiguration.MetricClientType.MBEAN_PLATFORM;
 
 /**
  * @author amesika
@@ -24,65 +16,45 @@ public class Jmx2Graphite {
 
     private static final Logger logger = LoggerFactory.getLogger(Jmx2Graphite.class);
 
-    private Jmx2GraphiteConfiguration conf;
-    private Injector injector;
-    private Scheduler scheduler;
-
-    public static void main(String[] args) {
-       Config config = ConfigFactory.load();
-        Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(config);
-        Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration);
-        main.run();
-    }
+    private final Jmx2GraphiteConfiguration conf;
+    private final ScheduledThreadPoolExecutor taskScheduler;
+    private final MBeanClient client;
 
     public Jmx2Graphite(Jmx2GraphiteConfiguration conf) {
         this.conf = conf;
-    }
 
-    public void run() {
-        try {
-            logger.info("Running with Jolokia URL: "+conf.jolokiaUrl);
-            logger.info("Graphite: host = "+conf.graphiteHostname +", port = "+conf.graphitePort);
+        this.taskScheduler = new ScheduledThreadPoolExecutor(1);
 
-            injector = Guice.createInjector(new MyModule(conf));
+        if (conf.getMetricClientType() == JOLOKIA) {
+            this.client = new JolokiaClient(conf.getJolokiaFullUrl());
+            logger.info("Running with Jolokia URL: {}", conf.getJolokiaFullUrl());
 
-            scheduler = StdSchedulerFactory.getDefaultScheduler();
-            scheduler.setJobFactory(injector.getInstance(GuiceJobFactory.class));
-            submitPollerJob();
-            enableHangupSupport();
-
-            scheduler.start();
-        } catch (SchedulerException e) {
-            throw Throwables.propagate(e);
+        } else if (conf.getMetricClientType() == MBEAN_PLATFORM) {
+            this.client = new JavaAgentClient();
+            logger.info("Running with Mbean client");
+        }
+        else {
+            throw new IllegalConfiguration("Unsupported client type: " + conf.getMetricClientType());
         }
     }
 
-    private void submitPollerJob() throws SchedulerException {
-        JobDetail job = newJob(MetricsPoller.class)
-                .withIdentity("MetricsPoller", "Pollers")
-                .build();
-
-        // Trigger the job to run now, and then repeat every 40 seconds
-        Trigger trigger = newTrigger()
-                .withIdentity("ScheduledTrigger", "PollerTriggers")
-                .startNow()
-                .withSchedule(simpleSchedule()
-                        .withIntervalInSeconds(conf.intervalInSeconds)
-                        .repeatForever())
-                .build();
-
-        // Tell quartz to schedule the job using our trigger
-        scheduler.scheduleJob(job, trigger);
+    public void run() {
+        logger.info("Graphite: host = {}, port = {}", conf.getGraphiteHostname(), conf.getGraphitePort());
+        enableHangupSupport();
+        MetricsPipeline pipeline = new MetricsPipeline(conf, client);
+        taskScheduler.scheduleWithFixedDelay(pipeline::pollAndSend, 0, conf.getMetricsPollingIntervalInSeconds(), TimeUnit.SECONDS);
     }
 
-    public void shutdown() {
+    private void shutdown() {
         logger.info("Shutting down...");
-        if (scheduler != null) {
-            try {
-                scheduler.shutdown();
-            } catch (SchedulerException e) {
-                logger.info("Failed closing Quartz scheduler. Error = " + e.getMessage(), e);
-            }
+        try {
+            taskScheduler.shutdown();
+            taskScheduler.awaitTermination(20, TimeUnit.SECONDS);
+            taskScheduler.shutdownNow();
+        } catch (InterruptedException e) {
+
+            Thread.interrupted();
+            taskScheduler.shutdownNow();
         }
     }
 
@@ -90,7 +62,7 @@ public class Jmx2Graphite {
      * Enables the hangup support. Gracefully stops by calling shutdown() on a
      * Hangup signal.
      */
-    public void enableHangupSupport() {
+    private void enableHangupSupport() {
         HangupInterceptor interceptor = new HangupInterceptor(this);
         Runtime.getRuntime().addShutdownHook(interceptor);
     }
