@@ -6,8 +6,6 @@ Currently it has two flavors:
 1. Docker image which reads JMX from a jolokia agent running on a JVM, since exposing JMX is the simplest and easiest through Jolokia agent (1 liner - see below).
 2. Run as a java agent, and get metrics directly from MBean Platform
 
-The reporting to graphite is done through the Pickle protocol, hence by default port 2004, since it's more efficient.
-
 The metrics reported have the following names template:
 
 [service-name].[service-host].[metric-name]
@@ -51,7 +49,8 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 
 ### Optional environment variables
 
-- GRAPHITE_PORT: *Pickle* protocol port of graphite. Defaults to 2004. Don't use the text protocol port (2003) otherwise it wouldn't work.
+- GRAPHITE_PORT: Protocol port of graphite. Defaults to 2004.
+- GRAPHITE_PROTOCOL: Protocol for graphite communication. Defaults to "pickle". Possible values: udp, tcp, pickle
 - SERVICE_HOST: By default the host is taken from Jolokia URL and serves as the service host, unless you use this variable.
 - INTERVAL_IN_SEC: By default 30 seconds unless you use this variable.
 
