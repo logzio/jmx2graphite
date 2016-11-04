@@ -95,7 +95,7 @@ public class Jmx2GraphiteConfiguration {
 
         graphiteConnectTimeout = config.getInt("graphite.connectTimeout");
         graphiteSocketTimeout = config.getInt("graphite.socketTimeout");
-        graphiteProtocol = GraphiteProtocol.valueOf(config.getString("graphite.protocol"));
+        graphiteProtocol = getGraphiteProtocol(config);
         if (config.hasPath("graphite.writeTimeout")) {
             graphiteWriteTimeoutMs = config.getInt("graphite.writeTimeout");
         } else {
@@ -103,7 +103,13 @@ public class Jmx2GraphiteConfiguration {
         }
     }
 
-
+    private GraphiteProtocol getGraphiteProtocol(Config config) {
+        String protocol = config.getString("graphite.protocol");
+        if (protocol != null) {
+            return GraphiteProtocol.valueOf(protocol.toUpperCase());
+        }
+        return null;
+    }
 
     public String getJolokiaFullUrl() {
         return jolokiaFullUrl;
