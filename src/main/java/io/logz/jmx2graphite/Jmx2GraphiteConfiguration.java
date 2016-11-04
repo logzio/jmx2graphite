@@ -31,9 +31,9 @@ public class Jmx2GraphiteConfiguration {
 
     // Which client should we use
     private MetricClientType metricClientType;
-    private String graphiteProtocol;
+    private GraphiteProtocol graphiteProtocol;
 
-    public String getGraphiteProtocol() {
+    public GraphiteProtocol getGraphiteProtocol() {
         return graphiteProtocol;
     }
 
@@ -95,7 +95,7 @@ public class Jmx2GraphiteConfiguration {
 
         graphiteConnectTimeout = config.getInt("graphite.connectTimeout");
         graphiteSocketTimeout = config.getInt("graphite.socketTimeout");
-        graphiteProtocol = config.getString("graphite.protocol");
+        graphiteProtocol = GraphiteProtocol.valueOf(config.getString("graphite.protocol"));
         if (config.hasPath("graphite.writeTimeout")) {
             graphiteWriteTimeoutMs = config.getInt("graphite.writeTimeout");
         } else {

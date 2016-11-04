@@ -1,5 +1,8 @@
 package io.logz.jmx2graphite;
 
+import static io.logz.jmx2graphite.GraphiteProtocol.TCP;
+import static io.logz.jmx2graphite.GraphiteProtocol.UDP;
+
 import com.codahale.metrics.graphite.Graphite;
 import com.codahale.metrics.graphite.GraphiteSender;
 import com.codahale.metrics.graphite.GraphiteUDP;
@@ -25,7 +28,7 @@ public class GraphiteClient implements Closeable {
 
     public GraphiteClient(String serviceHost, String serviceName, String graphiteHostname, int graphitePort,
                           int connectTimeout, int socketTimeout, int writeTimeoutMs,
-                          String protocol) {
+                          GraphiteProtocol protocol) {
         List<String> prefixElements = Lists.newArrayList();
         if (serviceName != null && !serviceName.isEmpty()) {
             prefixElements.add(sanitizeMetricName(serviceName));
@@ -43,9 +46,9 @@ public class GraphiteClient implements Closeable {
         logger.info("Graphite Client: using writeTimeoutMs of {} [ms]. Establishing connection..." ,writeTimeoutMs);
 
         SocketFactory socketFactory = new SocketFactoryWithTimeouts(connectTimeout, socketTimeout);
-        if ("udp".equals(protocol)) {
+        if (protocol == UDP) {
             graphite = new GraphiteUDP(new InetSocketAddress(graphiteHostname, graphitePort));
-        } else if ("tcp".equals(protocol)) {
+        } else if (protocol == TCP) {
             graphite = new Graphite(new InetSocketAddress(graphiteHostname, graphitePort),
                                     socketFactory);
         } else {
