@@ -1,19 +1,24 @@
 package io.logz.jmx2graphite;
 
-import com.codahale.metrics.graphite.GraphiteSender;
+import static io.logz.jmx2graphite.GraphiteProtocol.TCP;
+import static io.logz.jmx2graphite.GraphiteProtocol.UDP;
 
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteSender;
+import com.codahale.metrics.graphite.GraphiteUDP;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.net.SocketFactory;
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import javax.net.SocketFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GraphiteClient implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(GraphiteClient.class);
@@ -22,7 +27,8 @@ public class GraphiteClient implements Closeable {
     private int failuresAtLastWrite = 0;
 
     public GraphiteClient(String serviceHost, String serviceName, String graphiteHostname, int graphitePort,
-                          int connectTimeout, int socketTimeout, int writeTimeoutMs) {
+                          int connectTimeout, int socketTimeout, int writeTimeoutMs,
+                          GraphiteProtocol protocol) {
         List<String> prefixElements = Lists.newArrayList();
         if (serviceName != null && !serviceName.isEmpty()) {
             prefixElements.add(sanitizeMetricName(serviceName));
@@ -40,9 +46,15 @@ public class GraphiteClient implements Closeable {
         logger.info("Graphite Client: using writeTimeoutMs of {} [ms]. Establishing connection..." ,writeTimeoutMs);
 
         SocketFactory socketFactory = new SocketFactoryWithTimeouts(connectTimeout, socketTimeout);
-        graphite = new PickledGraphite(new InetSocketAddress(graphiteHostname, graphitePort),
-                socketFactory, /*batchSize */ 400, writeTimeoutMs);
-
+        if (protocol == UDP) {
+            graphite = new GraphiteUDP(new InetSocketAddress(graphiteHostname, graphitePort));
+        } else if (protocol == TCP) {
+            graphite = new Graphite(new InetSocketAddress(graphiteHostname, graphitePort),
+                                    socketFactory);
+        } else {
+            graphite = new PickledGraphite(new InetSocketAddress(graphiteHostname, graphitePort),
+                                           socketFactory, /*batchSize */ 400, writeTimeoutMs);
+        }
     }
 
     public static String sanitizeMetricName(String s) {

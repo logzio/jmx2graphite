@@ -1,15 +1,14 @@
 package io.logz.jmx2graphite;
 
-import com.google.common.collect.Lists;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.Assert.fail;
 
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.fail;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author amesika
@@ -39,7 +38,8 @@ public class TestGraphiteClient {
     public void testOnServerShutdown() throws Exception {
         int connectTimeout = 1000;
         int socketTimeout = 1000;
-        GraphiteClient client = new GraphiteClient("bla-host.com", "bla-service", "localhost", port, connectTimeout, socketTimeout, 2000);
+        GraphiteClient client = new GraphiteClient("bla-host.com", "bla-service", "localhost",
+                                                   port, connectTimeout, socketTimeout, 2000, null);
 
         ArrayList<MetricValue> dummyMetrics = Lists.newArrayList(new MetricValue("dice", 4, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())));
 
@@ -63,7 +63,9 @@ public class TestGraphiteClient {
     public void testOnServerRestart() throws InterruptedException {
         int connectTimeout = 1000;
         int socketTimeout = 1000;
-        GraphiteClient client = new GraphiteClient("bla-host.com", "bla-service", "localhost", port, connectTimeout, socketTimeout, 20000);
+        GraphiteClient client = new GraphiteClient("bla-host.com", "bla-service", "localhost",
+                                                   port, connectTimeout, socketTimeout, 20000,
+                                                   null);
 
         ArrayList<MetricValue> dummyMetrics = Lists.newArrayList(new MetricValue("dice", 4, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())));
 

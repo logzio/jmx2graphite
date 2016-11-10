@@ -26,7 +26,8 @@ public class MetricsPipeline {
 
         this.graphiteClient = new GraphiteClient(conf.getServiceHost(), conf.getServiceName(), conf.getGraphiteHostname(),
                                                  conf.getGraphitePort(), conf.getGraphiteConnectTimeout(),
-                                                 conf.getGraphiteSocketTimeout(), conf.getGraphiteWriteTimeoutMs());
+                                                 conf.getGraphiteSocketTimeout(), conf.getGraphiteWriteTimeoutMs(),
+                                                 conf.getGraphiteProtocol());
         this.client = client;
         this.pollingIntervalSeconds = conf.getMetricsPollingIntervalInSeconds();
     }

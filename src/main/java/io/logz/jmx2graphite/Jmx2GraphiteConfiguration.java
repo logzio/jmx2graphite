@@ -31,6 +31,11 @@ public class Jmx2GraphiteConfiguration {
 
     // Which client should we use
     private MetricClientType metricClientType;
+    private GraphiteProtocol graphiteProtocol;
+
+    public GraphiteProtocol getGraphiteProtocol() {
+        return graphiteProtocol;
+    }
 
     public enum MetricClientType {
         JOLOKIA,
@@ -90,6 +95,7 @@ public class Jmx2GraphiteConfiguration {
 
         graphiteConnectTimeout = config.getInt("graphite.connectTimeout");
         graphiteSocketTimeout = config.getInt("graphite.socketTimeout");
+        graphiteProtocol = getGraphiteProtocol(config);
         if (config.hasPath("graphite.writeTimeout")) {
             graphiteWriteTimeoutMs = config.getInt("graphite.writeTimeout");
         } else {
@@ -97,7 +103,13 @@ public class Jmx2GraphiteConfiguration {
         }
     }
 
-
+    private GraphiteProtocol getGraphiteProtocol(Config config) {
+        String protocol = config.getString("graphite.protocol");
+        if (protocol != null) {
+            return GraphiteProtocol.valueOf(protocol.toUpperCase());
+        }
+        return null;
+    }
 
     public String getJolokiaFullUrl() {
         return jolokiaFullUrl;
