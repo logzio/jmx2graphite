@@ -83,6 +83,8 @@ public class Jmx2GraphiteJavaAgent {
                 return "graphite.socketTimeout";
             case "GRAPHITE_WRITE_TIMEOUT_MS":
                 return "graphite.writeTimeout";
+            case "GRAPHITE_PROTOCOL":
+                return "graphite.protocol";
             default:
                 throw new IllegalConfiguration("Unknown configuration option: " + key);
         }
