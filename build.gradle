@@ -8,7 +8,7 @@ apply plugin: "com.github.johnrengelman.shadow"
 mainClassName = 'io.logz.jmx2graphite.Jmx2GraphiteJolokia'
 
 group = "io.logz"
-version = "1.1.0"
+version = "1.1.1-SNAPSHOT"
 
 repositories {
     mavenCentral()
