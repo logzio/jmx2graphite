@@ -232,6 +232,9 @@ docker push logzio/jmx2graphite
 
 
 # Changelog
+- v1.1.1 
+  - Added support for 2 additional protocols when sending metrics to Graphite: tcp, udp. This is
+    in addition to the existing Pickle protocol (Contributed by: jdavisonc)
 - v1.1.0
   - Major refactoring - jmx2graphite now comes in two flavors: standalone using docker as it was in 1.0.x, and as a Java Agent running alongside you app. This is useful if your app is running inside Docker on Mesos and coupling it with another container just to read its metrics contradicts the Mesos paradigm.
   - Added java agent capabilities, through MBeans Platform
