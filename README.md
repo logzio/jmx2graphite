@@ -25,6 +25,7 @@ docker run -i -t -d --name jmx2graphite \
    -e "JOLOKIA_URL=http://172.1.1.2:11001/jolokia/" \
    -e "SERVICE_NAME=MyApp" \
    -e "GRAPHITE_HOST=graphite.foo.com" \
+   -e "GRAPHITE_PROTOCOL=pickled" \
    -v /var/log/jmx2graphite:/var/log/jmx2graphite \
    --rm=true
    logzio/jmx2graphite
@@ -41,6 +42,7 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
   What this does is add mapping between the host name myapp.com to the internal IP of the docker running your service to the /etc/hosts file.
 - SERVICE_NAME: The name of the service (it's role).
 - GRAPHITE_HOST: The hostname/IP of graphite
+- GRAPHITE_PROTOCOL: Protocol for graphite communication. Possible values: udp, tcp, pickled
 
 *Rest of command*
 - ` -v /var/log/jmx2graphite:/var/log/jmx2graphite`: jmx2graphite by defaults writes its log (using Logback) to `/var/log/jmx2graphite`. This argument maps this directory to the host directory so you can easily view the logs from the place you run the docker command
@@ -50,7 +52,6 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 ### Optional environment variables
 
 - GRAPHITE_PORT: Protocol port of graphite. Defaults to 2004.
-- GRAPHITE_PROTOCOL: Protocol for graphite communication. Defaults to "pickle". Possible values: udp, tcp, pickle
 - SERVICE_HOST: By default the host is taken from Jolokia URL and serves as the service host, unless you use this variable.
 - INTERVAL_IN_SEC: By default 30 seconds unless you use this variable.
 
