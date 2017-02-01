@@ -1,6 +1,6 @@
 # jmx2graphite
 
-jmx2graphite is a one liner tool for polling JXM and writes into Graphite (every 30 seconds by default). You install & run it on every machine you want to poll its JMX.
+jmx2graphite is a one liner tool for polling JMX and writes into Graphite (every 30 seconds by default). You install & run it on every machine you want to poll its JMX.
 
 Currently it has two flavors:
 1. Docker image which reads JMX from a jolokia agent running on a JVM, since exposing JMX is the simplest and easiest through Jolokia agent (1 liner - see below).
