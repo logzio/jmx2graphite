@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
@@ -75,6 +76,8 @@ public class JolokiaClient extends MBeanClient {
 
         try {
             String requestBody = objectMapper.writeValueAsString(readRequests);
+            if (logger.isTraceEnabled()) logger.trace("Jolokia getBeans request body: {}", requestBody);
+
             HttpResponse httpResponse = Post(jolokiaFullURL+"read?ignoreErrors=true&canonicalNaming=false")
                     .connectTimeout(connectTimeout)
                     .socketTimeout(socketTimeout)
@@ -85,8 +88,11 @@ public class JolokiaClient extends MBeanClient {
                 throw new RuntimeException("Failed reading beans from jolokia. Response = "+httpResponse.getStatusLine());
             }
 
-            ArrayList<Map<String, Object>> responses = objectMapper.readValue(httpResponse.getEntity().getContent(), ArrayList.class);
-            if (logger.isTraceEnabled()) logger.trace("Jolokia getBeans response:\n{}", objectMapper.writeValueAsString(responses));
+            String responseBody =  IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
+
+            if (logger.isTraceEnabled()) logger.trace("Jolokia getBeans response:\n{}", responseBody);
+
+            ArrayList<Map<String, Object>> responses = objectMapper.readValue(responseBody, ArrayList.class);
 
             List<MetricValue> metricValues = Lists.newArrayList();
             for (Map<String, Object> response : responses) {
