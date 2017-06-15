@@ -143,7 +143,7 @@ We will install Graphite using a great docker image by [hopsoft](https://github.
       If you have 10s:24h then when doing derivative, you will get null values for each missing 2 points in the 30sec window
       and the graph will be empty
 
-5. Create some directories which normally are crearted by the docker image but since we're mounting `/var/log` to an empty directory of ours in the host, they don't exists:
+5. Create some directories which normally are created by the docker image but since we're mounting `/var/log` to an empty directory of ours in the host, they don't exists:
     ```bash
     mkdir -p /home/ubuntu/log/nginx
     mkdir -p /home/ubuntu/log/carbon
@@ -233,6 +233,8 @@ docker push logzio/jmx2graphite
 
 
 # Changelog
+- v1.2.0
+  - Changed Docker image to be based upon Alpine and OpenJDK 
 - v1.1.1 
   - Added support for 2 additional protocols when sending metrics to Graphite: tcp, udp. This is
     in addition to the existing Pickle protocol (Contributed by: jdavisonc)
