@@ -233,6 +233,9 @@ docker push logzio/jmx2graphite
 
 
 # Changelog
+- v1.2.1
+  - Fixed a bug when no protocol was provided
+  - Fixed log4j dependencies
 - v1.2.0
   - Changed Docker image to be based upon Alpine and OpenJDK 
 - v1.1.1 
