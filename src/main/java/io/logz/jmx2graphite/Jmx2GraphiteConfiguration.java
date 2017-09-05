@@ -104,7 +104,8 @@ public class Jmx2GraphiteConfiguration {
     }
 
     private GraphiteProtocol getGraphiteProtocol(Config config) {
-        String protocol = config.getString("graphite.protocol");
+        String GRAPHITE_PROTOCOL = "graphite.protocol";
+        String protocol = config.hasPath(GRAPHITE_PROTOCOL) ? config.getString(GRAPHITE_PROTOCOL) : null;
         if (protocol != null) {
             return GraphiteProtocol.valueOf(protocol.toUpperCase());
         }
