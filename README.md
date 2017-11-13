@@ -233,6 +233,8 @@ docker push logzio/jmx2graphite
 
 
 # Changelog
+- v1.2.3
+  - Fixed an NPE when poll() resulted in MBeanClient.MBeanClientPollingFailure
 - v1.2.1
   - Fixed a bug when no protocol was provided
   - Fixed log4j dependencies
