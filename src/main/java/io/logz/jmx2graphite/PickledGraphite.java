@@ -3,6 +3,7 @@ package io.logz.jmx2graphite;
 import com.codahale.metrics.graphite.GraphiteSender;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.nurkiewicz.asyncretry.AsyncRetryExecutor;
 import com.nurkiewicz.asyncretry.RetryExecutor;
 import org.slf4j.Logger;
@@ -35,7 +36,6 @@ public class PickledGraphite implements GraphiteSender {
     private static final Logger LOGGER = LoggerFactory.getLogger(PickledGraphite.class);
     private final static int DEFAULT_BATCH_SIZE = 100;
     private static final int DEFAULT_WRITE_TIMEOUT_MS = (int) TimeUnit.SECONDS.toMillis(20);
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     private int batchSize;
     // graphite expects a python-pickled list of nested tuples.
@@ -228,7 +228,10 @@ public class PickledGraphite implements GraphiteSender {
         this.charset = charset;
         this.batchSize = batchSize;
         this.writeTimeoutMs = writeTimeoutMs;
-        scheduler = Executors.newSingleThreadScheduledExecutor();
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("Jmx2GraphitePickledSender-%d")
+                .build();
+        scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
         executor = new AsyncRetryExecutor(scheduler)
                 .retryIf(this::brokenPipe)
                 .retryOn(SocketException.class)
