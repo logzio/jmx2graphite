@@ -1,5 +1,6 @@
 package io.logz.jmx2graphite;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,8 @@ public class Jmx2Graphite {
     public Jmx2Graphite(Jmx2GraphiteConfiguration conf) {
         this.conf = conf;
 
-        this.taskScheduler = new ScheduledThreadPoolExecutor(1);
+        this.taskScheduler = new ScheduledThreadPoolExecutor(1,
+                                                             new BasicThreadFactory.Builder().namingPattern("Jmx2GraphiteSender").build());
 
         if (conf.getMetricClientType() == JOLOKIA) {
             this.client = new JolokiaClient(conf.getJolokiaFullUrl());
