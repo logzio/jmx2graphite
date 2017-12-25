@@ -3,9 +3,9 @@ package io.logz.jmx2graphite;
 import com.codahale.metrics.graphite.GraphiteSender;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.nurkiewicz.asyncretry.AsyncRetryExecutor;
 import com.nurkiewicz.asyncretry.RetryExecutor;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -228,8 +228,10 @@ public class PickledGraphite implements GraphiteSender {
         this.charset = charset;
         this.batchSize = batchSize;
         this.writeTimeoutMs = writeTimeoutMs;
-        scheduler = Executors.newSingleThreadScheduledExecutor(
-                new BasicThreadFactory.Builder().namingPattern("Jmx2GraphitePickledSender").build());
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("Jmx2GraphitePickledSender-%d")
+                .build();
+        scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
         executor = new AsyncRetryExecutor(scheduler)
                 .retryIf(this::brokenPipe)
                 .retryOn(SocketException.class)
