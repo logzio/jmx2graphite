@@ -27,7 +27,7 @@ docker run -i -t -d --name jmx2graphite \
    -e "GRAPHITE_HOST=graphite.foo.com" \
    -e "GRAPHITE_PROTOCOL=pickled" \
    -v /var/log/jmx2graphite:/var/log/jmx2graphite \
-   --rm=true
+   --rm=true \
    logzio/jmx2graphite
 ```
 
