@@ -75,7 +75,7 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 This lib can also get the metrics from MBean Platform instead of jolokia. In order to do so, we need to run inside the JVM.
 - First, get the java agent jar from the releases page
 - Modify your app JVM arguments and add the following:  java -javaagent:/path/to/jmx2graphite-1.1.0-javaagent.jar=GRAPHITE_HOSTNAME=graphite.host;SERVICE_NAME=Myservice ...
-- The parameters are key-value pairs, in the format of key=value;key=value;...
+- The parameters are key-value pairs, in the format of key=value;key=value;... or key=value,key=value,...
 - The parameters names and functions are exactly as described in Environment Variables section. (Except no need to specify JOLOKIA_URL of course)
 - The javaagent.jar is an "Uber-Jar" that shades all of its dependencies inside, to prevent class collisions
 - For example: java -javaagent:/opt/jmx2graphite-1.1.0-javaagent.jar=GRAPHITE_HOSTNAME=graphite.example.com;SERVICE_NAME=PROD.MyAwesomeCategory example.jar
@@ -233,6 +233,8 @@ docker push logzio/jmx2graphite
 
 
 # Changelog
+- v1.2.5
+  - Support comma as an argument delimiter in addition to semicolon when using as a java agent
 - v1.2.3
   - Fixed an NPE when poll() resulted in MBeanClient.MBeanClientPollingFailure
 - v1.2.1
