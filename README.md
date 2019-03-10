@@ -234,7 +234,7 @@ docker push logzio/jmx2graphite
 
 # Changelog
 - v1.2.5
-  - Support comma as an argument delimiter in addition to semicolon when using as a java agent
+  - This release adds support for commas as argument delimiters when using as a Java agent. If you experience issues when using semicolons as argument delimiters, try using a comma.
 - v1.2.3
   - Fixed an NPE when poll() resulted in MBeanClient.MBeanClientPollingFailure
 - v1.2.1
