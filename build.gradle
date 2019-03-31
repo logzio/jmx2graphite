@@ -1,6 +1,7 @@
 description 'JMX 2 Graphite. Dumps JMX beans into Graphite'
 
 apply plugin:'java'
+apply plugin:'maven'
 apply plugin: 'kotlin'
 apply plugin:'application'
 apply plugin: "com.github.johnrengelman.shadow"
@@ -15,6 +16,7 @@ repositories {
 }
 
 dependencies {
+    compile 'commons-lang:commons-lang:2.3'
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'org.apache.httpcomponents:fluent-hc:4.5.1'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.3'
@@ -82,11 +84,12 @@ startScripts {
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.8'
+wrapper {
+    gradleVersion = '5.1'
 }
+
 buildscript {
-    ext.kotlin_version = '1.0.1-2'
+    ext.kotlin_version = '1.3.21'
     repositories {
         mavenCentral()
         maven {
@@ -95,7 +98,7 @@ buildscript {
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.3"
+        classpath "com.github.jengelman.gradle.plugins:shadow:5.0.0"
     }
 }
 sourceSets {
