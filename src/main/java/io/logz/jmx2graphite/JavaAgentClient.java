@@ -69,7 +69,6 @@ public class JavaAgentClient extends MBeanClient {
 
     @Override
     public List<MetricValue> getMetrics(List<MetricBean> beans) throws MBeanClientPollingFailure{
-
         List<MetricValue> metricValues = Lists.newArrayList();
         long metricTime = LocalDate.now().atStartOfDay(ZoneId.of("UTC")).toEpochSecond();
 
