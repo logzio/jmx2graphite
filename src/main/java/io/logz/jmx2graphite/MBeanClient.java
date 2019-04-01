@@ -1,9 +1,6 @@
 package io.logz.jmx2graphite;
 
-import com.google.common.collect.Maps;
-
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by roiravhon on 6/6/16.
