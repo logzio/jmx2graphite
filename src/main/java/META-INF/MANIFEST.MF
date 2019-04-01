@@ -1,0 +1,3 @@
+Manifest-Version: 1.0
+Premain-Class: io.logz.jmx2graphite.Jmx2GraphiteJavaAgent
+Main-Class: io.logz.jmx2graphite.Jmx2GraphiteJolokia
