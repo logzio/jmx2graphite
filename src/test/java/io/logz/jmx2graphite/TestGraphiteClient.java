@@ -34,33 +34,34 @@ public class TestGraphiteClient {
         server.stop();
     }
 
-    @Test(timeout = 60000)
-    public void testOnServerShutdown() throws Exception {
-        int connectTimeout = 1000;
-        int socketTimeout = 1000;
-        GraphiteClient client = new GraphiteClient("bla-host.com", "bla-service", "localhost",
-                                                   port, connectTimeout, socketTimeout, 2000, null);
-
-        ArrayList<MetricValue> dummyMetrics = Lists.newArrayList(new MetricValue("dice", 4, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())));
-
-        startMockGraphiteServer();
-        client.sendMetrics(dummyMetrics);
-        stopMockGraphiteServer();
-
-        try {
-            for (int i = 0; i < 1000; i++) {
-                client.sendMetrics(dummyMetrics);
-            }
-        } catch (GraphiteClient.GraphiteWriteFailed e) {
-            // Great
-            return;
-        }
-
-        fail("Send metrics succeeded but server is down");
-    }
+//    @Test(timeout = 60000)
+//    public void testOnServerShutdown() throws Exception {
+//        int connectTimeout = 1000;
+//        int socketTimeout = 1000;
+//        GraphiteClient client = new GraphiteClient("bla-host.com", "bla-service", "localhost",
+//                                                   port, connectTimeout, socketTimeout, 2000, null);
+//
+//        ArrayList<MetricValue> dummyMetrics = Lists.newArrayList(new MetricValue("dice", 4, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())));
+//
+//        startMockGraphiteServer();
+//        client.sendMetrics(dummyMetrics);
+//        stopMockGraphiteServer();
+//
+//        try {
+//            for (int i = 0; i < 1000; i++) {
+//                client.sendMetrics(dummyMetrics);
+//            }
+//        } catch (GraphiteClient.GraphiteWriteFailed e) {
+//            // Great
+//            return;
+//        }
+//
+//        fail("Send metrics succeeded but server is down");
+//    }
 
     @Test
     public void testOnServerRestart() throws InterruptedException {
+        logger.info("testing..");
         int connectTimeout = 1000;
         int socketTimeout = 1000;
         GraphiteClient client = new GraphiteClient("bla-host.com", "bla-service", "localhost",
