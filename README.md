@@ -214,13 +214,10 @@ We welcome any contribution! You can help in the following way:
 
 ## Building and Deploying
 # Build
-```
-./gradlew build
-docker build -t logzio/jmx2graphite .
-```
+
 Build Java Agent
 ```
-./gradlew build javaAgent
+mvn clean install
 ```
 
 # Deploy
