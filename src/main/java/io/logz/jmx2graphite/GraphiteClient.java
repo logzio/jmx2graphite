@@ -84,6 +84,12 @@ public class GraphiteClient implements Closeable {
         return sb.toString();
     }
 
+    /**
+     * send a list of metrics to graphite
+     * @param metrics
+     * @throws GraphiteWriteFailed
+     */
+
     public void sendMetrics(List<MetricValue> metrics) throws GraphiteWriteFailed {
         try {
             if (!graphite.isConnected()) {
