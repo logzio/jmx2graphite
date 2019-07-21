@@ -56,17 +56,14 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 - INTERVAL_IN_SEC: By default 30 seconds unless you use this variable.
 
 ## Using bash + Jolokia agent
-1. Clone the repository ```git clone https://github.com/logzio/jmx2graphite```
-2. ```cd jmx2graphite```
-3. Edit the configuration file at ```jmx2graphite/conf/application.conf```: The mandatory items are:
+1. get the java agent jar from the releases page
+2. Create a config file that will contain the input parameters, see [our sample config file](https://github.com/logzio/jmx2graphite/config.conf) - The mandatory items are:
    1. service/jolokiaFullUrl - Fill in the full URL to the JVM running Jolokia (It exposes your JMX as a REST service, normally under port 8778).
    2. service/name - The role name of the service.
    3. graphite/hostname  - Graphite host name the metrics will be sent to
-4. Run your app with Jolokia agent (instructions below)
-5. run ```mvn clean install```. This will build an executable jar
-6. ```cd target```
-7. run the jar: ```java -jar jmx2graphite-1.3-javaagent.jar```
-8. If you wish to run this as a service you need to create a service wrapper for it. Any pull requests for making it are welcome!
+3. Run your app with Jolokia agent (instructions below)
+4. run the jar: ```java -jar jmx2graphite-1.3.1-javaagent.jar```
+5. If you wish to run this as a service you need to create a service wrapper for it. Any pull requests for making it are welcome!
 
    
 ## As Java Agent
@@ -76,7 +73,7 @@ This lib can also get the metrics from MBean Platform instead of jolokia. In ord
 - The parameters are key-value pairs, in the format of key=value;key=value;... or key=value,key=value,...
 - The parameters names and functions are exactly as described in Environment Variables section. (Except no need to specify JOLOKIA_URL of course)
 - The javaagent.jar is an "Uber-Jar" that shades all of its dependencies inside, to prevent class collisions
-- For example: java -javaagent:/opt/jmx2graphite-1.1.0-javaagent.jar=GRAPHITE_HOSTNAME=graphite.example.com;SERVICE_NAME=PROD.MyAwesomeCategory example.jar
+- For example: java -javaagent:jmx2graphite-1.3.1-javaagent.jar=GRAPHITE_HOSTNAME=graphite.example.com;SERVICE_NAME=PROD.MyAwesomeCategory example.jar
    
 
 # How to expose JMX Metrics using Jolokia Agent
@@ -228,6 +225,9 @@ docker push logzio/jmx2graphite
 
 
 # Changelog
+- v1.3.1
+  - support external config file when using with jolokia agent 
+  - provide docker for jmx2graphite when using with jolokia agent
 - v1.3
   - jmx2graphite is now a maven project, Hooray!
 - v1.2.5
