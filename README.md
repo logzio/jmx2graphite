@@ -58,9 +58,12 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 ## Using bash + Jolokia agent
 1. get the java agent jar from the releases page
 2. Create a config file that will contain the input parameters, see [our sample config file](https://github.com/logzio/jmx2graphite/config.conf) - The mandatory items are:
-   1. service/jolokiaFullUrl - Fill in the full URL to the JVM running Jolokia (It exposes your JMX as a REST service, normally under port 8778).
-   2. service/name - The role name of the service.
-   3. graphite/hostname  - Graphite host name the metrics will be sent to
+   1. service.jolokiaFullUrl - Fill in the full URL to the JVM running Jolokia (It exposes your JMX as a REST service, normally under port 8778).
+   2. service.name - The role name of the service.
+   3. graphite.hostname  - Graphite host name the metrics will be sent to
+   4. graphite.port - The port which Graphite listen to.
+   5. graphite.connectTimeout - Timeout in seconds for the connection with graphite.
+   6. graphite.socketTimeout - Timeout in seconds for the socket.
 3. Run your app with Jolokia agent (instructions below)
 4. run the jar: ```java -jar jmx2graphite-1.3.1-javaagent.jar```
 5. If you wish to run this as a service you need to create a service wrapper for it. Any pull requests for making it are welcome!
