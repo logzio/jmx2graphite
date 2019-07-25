@@ -76,7 +76,7 @@ docker run -d -name jmx2graphtite -v path/to/config/myConfig.conf:application.co
    5. graphite.connectTimeout - Timeout in seconds for the connection with graphite.
    6. graphite.socketTimeout - Timeout in seconds for the socket.
 3. Run your app with Jolokia agent (instructions below)
-4. run the jar: ```java -jar jmx2graphite-1.3.1-javaagent.jar```
+4. run the jar: ```java -jar jmx2graphite.jar```
 5. If you wish to run this as a service you need to create a service wrapper for it. Any pull requests for making it are welcome!
 
    
@@ -87,7 +87,7 @@ This lib can also get the metrics from MBean Platform instead of jolokia. In ord
 - The parameters are key-value pairs, in the format of key=value;key=value;... or key=value,key=value,...
 - The parameters names and functions are exactly as described in Environment Variables section. (Except no need to specify JOLOKIA_URL of course)
 - The javaagent.jar is an "Uber-Jar" that shades all of its dependencies inside, to prevent class collisions
-- For example: java -javaagent:jmx2graphite-1.3.1-javaagent.jar=GRAPHITE_HOSTNAME=graphite.example.com,SERVICE_NAME=PROD.MyAwesomeCategory example.jar
+- For example: java -javaagent:jmx2graphite.jar=GRAPHITE_HOSTNAME=graphite.example.com,SERVICE_NAME=PROD.MyAwesomeCategory example.jar
    
 
 # How to expose JMX Metrics using Jolokia Agent
