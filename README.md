@@ -55,7 +55,7 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 
 ### Docker with config file
 Create a .conf file, set the input parameter and provide it to the docker.
-See our [sample config file](https://github.com/logzio/jmx2graphite/application.conf)].
+See our [sample config file](application.conf)].
 
 You can find a complete list of the required parameters [here](#using-bash--jolokia-agent)
 ```bash
@@ -68,7 +68,7 @@ docker run -d -name jmx2graphtite -v path/to/config/myConfig.conf:application.co
 
 ## Using bash + Jolokia agent
 1. get the java agent jar from the releases page
-2. Create a config file that will contain the input parameters, see [our sample config file](https://github.com/logzio/jmx2graphite/application.conf) - The mandatory items are:
+2. Create a config file that will contain the input parameters, see [our sample config file](application.conf) - The mandatory items are:
    1. service.jolokiaFullUrl - Fill in the full URL to the JVM running Jolokia (It exposes your JMX as a REST service, normally under port 8778).
    2. service.name - The role name of the service.
    3. graphite.hostname  - Graphite host name the metrics will be sent to
