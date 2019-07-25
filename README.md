@@ -55,7 +55,7 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 
 ### Docker with config file
 Create a .conf file, set the input parameter and provide it to the docker.
-See our [sample config file](https://github.com/logzio/jmx2graphite/blob/master/application.conf)].
+See our [sample config file](https://github.com/logzio/jmx2graphite/blob/master/application.conf).
 
 You can find a complete list of the required parameters [here](#using-bash--jolokia-agent)
 ```bash
