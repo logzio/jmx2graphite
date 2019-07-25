@@ -16,7 +16,6 @@
 
         <Root level="info">
             <AppenderRef ref="default.console"/>
-            <AppenderRef ref="default.file"/>
         </Root>
     </Loggers>
 </Configuration>

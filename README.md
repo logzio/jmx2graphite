@@ -20,6 +20,9 @@ The metrics reported have the following names template:
 ## Using Docker (preferred)
 If you don't have docker, install it first - instructions [here](http://docs.docker.com/engine/installation/).
 
+Run the docker either with environment variables or with a configuration file.
+
+### Docker with env variables
 ```bash
 docker run -i -t -d --name jmx2graphite \
    -e "JOLOKIA_URL=http://172.1.1.2:11001/jolokia/" \
@@ -31,7 +34,7 @@ docker run -i -t -d --name jmx2graphite \
    logzio/jmx2graphite
 ```
 
-*Environment variables*
+**Environment variables**
 - JOLOKIA_URL: The full URL to jolokia on the JVM you want to sample. When jolokia (and the java app) is running inside a docker container
 there are two ways to specify the host in the jolokia URL so this URL will be reachable by jmx2graphite which also runs inside a docker instance:
   - The easy one: On the docker running your java app and Jolokia, makes sure to expose the jolokia port (using -v), and then use the *host* IP of the machine
@@ -44,39 +47,47 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 - GRAPHITE_HOST: The hostname/IP of graphite
 - GRAPHITE_PROTOCOL: Protocol for graphite communication. Possible values: udp, tcp, pickled
 
-*Rest of command*
-- ` -v /var/log/jmx2graphite:/var/log/jmx2graphite`: jmx2graphite by defaults writes its log (using Logback) to `/var/log/jmx2graphite`. This argument maps this directory to the host directory so you can easily view the logs from the place you run the docker command
-- `--rm=true`: removes the docker image created upon using `docker run` command, so you can just call `docker run` command again.
-
-
-### Optional environment variables
+**Optional environment variables**
 
 - GRAPHITE_PORT: Protocol port of graphite. Defaults to 2004.
 - SERVICE_HOST: By default the host is taken from Jolokia URL and serves as the service host, unless you use this variable.
 - INTERVAL_IN_SEC: By default 30 seconds unless you use this variable.
 
+### Docker with config file
+Create a .conf file, set the input parameter and provide it to the docker.
+See our [sample config file](https://github.com/logzio/jmx2graphite/application.conf)].
+
+You can find a complete list of the required parameters [here](#using-bash--jolokia-agent)
+```bash
+docker run -d -name jmx2graphtite -v path/to/config/myConfig.conf:application.conf logizo/jmx2graphite
+```
+**Note**: The config file at the docker end must be name application.conf
+
+*Rest of command*
+- `--rm=true`: removes the docker image created upon using `docker run` command, so you can just call `docker run` command again.
+
 ## Using bash + Jolokia agent
-1. Clone the repository ```git clone https://github.com/logzio/jmx2graphite```
-2. ```cd jmx2graphite```
-3. Edit the configuration file at ```jmx2graphite/conf/application.conf```: The mandatory items are:
-   1. service/jolokiaFullUrl - Fill in the full URL to the JVM running Jolokia (It exposes your JMX as a REST service, normally under port 8778).
-   2. service/name - The role name of the service.
-   3. graphite/hostname  - Graphite host name the metrics will be sent to
-4. Run your app with Jolokia agent (instructions below)
-5. run ```mvn clean install```. This will build an executable jar
-6. ```cd target```
-7. run the jar: ```java -jar jmx2graphite-1.3-javaagent.jar```
-8. If you wish to run this as a service you need to create a service wrapper for it. Any pull requests for making it are welcome!
+1. get the java agent jar from the releases page
+2. Create a config file that will contain the input parameters, see [our sample config file](https://github.com/logzio/jmx2graphite/application.conf) - The mandatory items are:
+   1. service.jolokiaFullUrl - Fill in the full URL to the JVM running Jolokia (It exposes your JMX as a REST service, normally under port 8778).
+   2. service.name - The role name of the service.
+   3. graphite.hostname  - Graphite host name the metrics will be sent to
+   4. graphite.port - The port which Graphite listen to.
+   5. graphite.connectTimeout - Timeout in seconds for the connection with graphite.
+   6. graphite.socketTimeout - Timeout in seconds for the socket.
+3. Run your app with Jolokia agent (instructions below)
+4. run the jar: ```java -jar jmx2graphite-1.3.1-javaagent.jar```
+5. If you wish to run this as a service you need to create a service wrapper for it. Any pull requests for making it are welcome!
 
    
 ## As Java Agent
 This lib can also get the metrics from MBean Platform instead of jolokia. In order to do so, we need to run inside the JVM.
 - First, get the java agent jar from the releases page
-- Modify your app JVM arguments and add the following:  java -javaagent:/path/to/jmx2graphite-1.2.5-javaagent.jar=GRAPHITE_HOSTNAME=graphite.host;SERVICE_NAME=Myservice ...
+- Modify your app JVM arguments and add the following:  java -javaagent:/path/to/jmx2graphite-1.3.1-javaagent.jar=GRAPHITE_HOSTNAME=graphite.host,SERVICE_NAME=Myservice ...
 - The parameters are key-value pairs, in the format of key=value;key=value;... or key=value,key=value,...
 - The parameters names and functions are exactly as described in Environment Variables section. (Except no need to specify JOLOKIA_URL of course)
 - The javaagent.jar is an "Uber-Jar" that shades all of its dependencies inside, to prevent class collisions
-- For example: java -javaagent:/opt/jmx2graphite-1.1.0-javaagent.jar=GRAPHITE_HOSTNAME=graphite.example.com;SERVICE_NAME=PROD.MyAwesomeCategory example.jar
+- For example: java -javaagent:jmx2graphite-1.3.1-javaagent.jar=GRAPHITE_HOSTNAME=graphite.example.com,SERVICE_NAME=PROD.MyAwesomeCategory example.jar
    
 
 # How to expose JMX Metrics using Jolokia Agent
@@ -228,6 +239,9 @@ docker push logzio/jmx2graphite
 
 
 # Changelog
+- v1.3.1
+  - support external config file when using with jolokia agent 
+  - provide docker for jmx2graphite when using with jolokia agent
 - v1.3
   - jmx2graphite is now a maven project, Hooray!
 - v1.2.5
