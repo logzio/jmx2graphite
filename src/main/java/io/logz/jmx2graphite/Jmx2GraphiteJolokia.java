@@ -23,7 +23,7 @@ public class Jmx2GraphiteJolokia {
             String configFilePath = args[CONFIG_FILE_INDEX];
             if ((new File(configFilePath)).exists()) {
                 logger.info("Loading from config file: {}", configFilePath);
-                config = ConfigFactory.parseFile(new File(configFilePath));
+                config = ConfigFactory.parseFile(new File(configFilePath)).resolve();
             } else {
                 logger.error("config filename {} supplied but couldn't be found.", configFilePath);
                 return;
