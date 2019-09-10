@@ -7,6 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 /**
  * @author amesika
@@ -32,6 +33,8 @@ public class Jmx2GraphiteConfiguration {
     // Which client should we use
     private MetricClientType metricClientType;
     private GraphiteProtocol graphiteProtocol;
+
+    private String logLevel;
 
     public GraphiteProtocol getGraphiteProtocol() {
         return graphiteProtocol;
@@ -100,6 +103,12 @@ public class Jmx2GraphiteConfiguration {
             graphiteWriteTimeoutMs = config.getInt("graphite.writeTimeout");
         } else {
             graphiteWriteTimeoutMs = Math.round(0.7f * TimeUnit.SECONDS.toMillis(metricsPollingIntervalInSeconds));
+        }
+
+        if(config.hasPath("log.level")) {
+            logLevel = config.getString("log.level");
+        } else {
+            logLevel = Level.INFO.getName();
         }
     }
 
@@ -190,5 +199,13 @@ public class Jmx2GraphiteConfiguration {
 
     public int getGraphiteWriteTimeoutMs() {
         return graphiteWriteTimeoutMs;
+    }
+
+    public String getLogLevel() {
+        return logLevel;
+    }
+
+    public void setLogLevel(String logLevel) {
+        this.logLevel = logLevel;
     }
 }

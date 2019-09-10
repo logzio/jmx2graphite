@@ -40,7 +40,6 @@ public class Jmx2GraphiteJavaAgent {
 
         Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration);
         logger.info("Initiated new java agent based Jmx2Graphite instance");
-
         try {
             main.run();
 
@@ -89,6 +88,8 @@ public class Jmx2GraphiteJavaAgent {
                 return "graphite.writeTimeout";
             case "GRAPHITE_PROTOCOL":
                 return "graphite.protocol";
+            case "LOG_LEVEL":
+                return "log.level";
             default:
                 throw new IllegalConfiguration("Unknown configuration option: " + key);
         }
