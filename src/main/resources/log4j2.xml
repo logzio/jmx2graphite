@@ -14,7 +14,7 @@
             <AppenderRef ref="default.console"/>
         </Logger>-->
 
-        <Root level="info">
+        <Root level="severe">
             <AppenderRef ref="default.console"/>
         </Root>
     </Loggers>
