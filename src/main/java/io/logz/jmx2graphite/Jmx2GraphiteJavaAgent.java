@@ -40,6 +40,7 @@ public class Jmx2GraphiteJavaAgent {
 
         Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration);
         logger.info("Initiated new java agent based Jmx2Graphite instance");
+
         try {
             main.run();
 
