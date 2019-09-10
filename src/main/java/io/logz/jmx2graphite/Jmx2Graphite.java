@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +47,7 @@ public class Jmx2Graphite {
             throw new IllegalConfiguration("Unsupported client type: " + conf.getMetricClientType());
         }
 
-        Configurator.setRootLevel(Level.valueOf(conf.getLogLevel()));
+        configureLogLevel(conf.getLogLevel());
     }
 
     public void run() {
@@ -100,5 +99,13 @@ public class Jmx2Graphite {
                 logger.warn("Error during stopping main", ex);
             }
         }
+    }
+
+    private void configureLogLevel (String level) {
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+        loggerConfig.setLevel(Level.valueOf(level));
+        ctx.updateLoggers();
     }
 }
