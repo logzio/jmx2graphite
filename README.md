@@ -93,7 +93,8 @@ This lib can also get the metrics from MBean Platform instead of jolokia. In ord
 - The parameters names and functions are exactly as described in Environment Variables section. (Except no need to specify JOLOKIA_URL of course)
 - The javaagent.jar is an "Uber-Jar" that shades all of its dependencies inside, to prevent class collisions
 - For example: java -javaagent:jmx2graphite.jar=GRAPHITE_HOSTNAME=graphite.example.com,SERVICE_NAME=PROD.MyAwesomeCategory example.jar
-
+- To configure Log Level add the configuration LOG_LEVEL=[any of OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL]
+  
    
 
 # How to expose JMX Metrics using Jolokia Agent

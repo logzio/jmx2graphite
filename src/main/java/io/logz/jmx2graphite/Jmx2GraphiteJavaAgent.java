@@ -89,6 +89,8 @@ public class Jmx2GraphiteJavaAgent {
                 return "graphite.writeTimeout";
             case "GRAPHITE_PROTOCOL":
                 return "graphite.protocol";
+            case "LOG_LEVEL":
+                return "log.level";
             default:
                 throw new IllegalConfiguration("Unknown configuration option: " + key);
         }
