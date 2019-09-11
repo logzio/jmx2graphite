@@ -16,6 +16,7 @@ import java.util.Map;
 public class Jmx2GraphiteJavaAgent {
 
     private static final Logger logger = LoggerFactory.getLogger(Jmx2GraphiteJavaAgent.class);
+    public static final String WHITE_LIST_REGEX = "white-list-regex";
 
     public static void premain(String agentArgument, Instrumentation instrumentation) {
 
@@ -91,6 +92,10 @@ public class Jmx2GraphiteJavaAgent {
                 return "graphite.protocol";
             case "LOG_LEVEL":
                 return "log.level";
+            case "WHITE_LIST_REGEX":
+                return WHITE_LIST_REGEX;
+            case "BLACK_LIST_REGEX":
+                return "blacklist-regex";
             default:
                 throw new IllegalConfiguration("Unknown configuration option: " + key);
         }

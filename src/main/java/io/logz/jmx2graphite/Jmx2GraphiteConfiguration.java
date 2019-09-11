@@ -8,16 +8,18 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 
 /**
  * @author amesika
  */
 public class Jmx2GraphiteConfiguration {
-    
+
+    private static final String ACCEPT_ALL_REGEX = ".*";
     private String jolokiaFullUrl;
 
     private Graphite graphite;
-
+    private Pattern whiteListPattern;
     /* Short name of the sampled service, required = false */
     private String serviceName = null;
 
@@ -38,6 +40,10 @@ public class Jmx2GraphiteConfiguration {
 
     public GraphiteProtocol getGraphiteProtocol() {
         return graphiteProtocol;
+    }
+
+    public Pattern getWhiteListPattern() {
+        return whiteListPattern;
     }
 
     public enum MetricClientType {
@@ -104,6 +110,7 @@ public class Jmx2GraphiteConfiguration {
         } else {
             graphiteWriteTimeoutMs = Math.round(0.7f * TimeUnit.SECONDS.toMillis(metricsPollingIntervalInSeconds));
         }
+        setFilterPatterns(config);
 
         if(config.hasPath("log.level")) {
             logLevel = config.getString("log.level");
@@ -119,6 +126,16 @@ public class Jmx2GraphiteConfiguration {
             return GraphiteProtocol.valueOf(protocol.toUpperCase());
         }
         return null;
+    }
+
+    private void setFilterPatterns(Config config) {
+        try {
+            whiteListPattern = Pattern.compile(config.hasPath(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX) ?
+                    config.getString(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX) : ACCEPT_ALL_REGEX);
+        } catch (Exception e) {
+            whiteListPattern = Pattern.compile(ACCEPT_ALL_REGEX);
+        }
+
     }
 
     public String getJolokiaFullUrl() {

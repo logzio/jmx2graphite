@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -17,6 +18,8 @@ import java.util.stream.Collectors;
 
 public class MetricsPipeline {
     private static final Logger logger = LoggerFactory.getLogger(MetricsPipeline.class);
+
+    private final Pattern beansWhiteListPattern;
 
     private int pollingIntervalSeconds;
 
@@ -31,6 +34,15 @@ public class MetricsPipeline {
                                                  conf.getGraphiteProtocol());
         this.client = client;
         this.pollingIntervalSeconds = conf.getMetricsPollingIntervalInSeconds();
+        this.beansWhiteListPattern = conf.getWhiteListPattern();
+
+    }
+
+    public List<MetricBean> getFilteredBeans(List<MetricBean> beans) {
+        List<MetricBean> filteredBeans = beans.stream()
+                .filter(bean -> beansWhiteListPattern.matcher(bean.getName()).find())
+                .collect(Collectors.toList());
+        return filteredBeans;
     }
 
     private List<MetricValue> poll() {
@@ -38,12 +50,15 @@ public class MetricsPipeline {
             long pollingWindowStartSeconds = getPollingWindowStartSeconds();
             Stopwatch sw = Stopwatch.createStarted();
             List<MetricBean> beans = client.getBeans();
+
             logger.info("Found {} metric beans. Time = {}ms, for {}", beans.size(),
                     sw.stop().elapsed(TimeUnit.MILLISECONDS),
                     new Date(TimeUnit.SECONDS.toMillis(pollingWindowStartSeconds)));
+            List<MetricBean> filteredBeans = getFilteredBeans(beans);
+            logger.info("Filtered {} metrics out of {} after white/blacklisting", beans.size() - filteredBeans.size(), beans.size());
 
             sw.reset().start();
-            List<MetricValue> metrics = client.getMetrics(beans);
+            List<MetricValue> metrics = client.getMetrics(filteredBeans);
             logger.info("metrics fetched. Time: {} ms; Metrics: {}", sw.stop().elapsed(TimeUnit.MILLISECONDS), metrics.size());
             if (logger.isTraceEnabled()) printToFile(metrics);
             return changeTimeTo(pollingWindowStartSeconds, metrics);
