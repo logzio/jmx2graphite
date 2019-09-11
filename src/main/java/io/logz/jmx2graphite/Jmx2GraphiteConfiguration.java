@@ -15,11 +15,13 @@ import java.util.regex.Pattern;
  */
 public class Jmx2GraphiteConfiguration {
 
-    private static final String ACCEPT_ALL_REGEX = ".*";
+    private static final String WHITE_LIST_ACCEPT_ALL_REGEX = ".*";
+    private static final String BLACK_LIST_ACCEPT_ALL_REGEX = "$a";
     private String jolokiaFullUrl;
 
     private Graphite graphite;
     private Pattern whiteListPattern;
+    private Pattern blackListPattern;
     /* Short name of the sampled service, required = false */
     private String serviceName = null;
 
@@ -44,6 +46,10 @@ public class Jmx2GraphiteConfiguration {
 
     public Pattern getWhiteListPattern() {
         return whiteListPattern;
+    }
+
+    public Pattern getBlackListPattern() {
+        return blackListPattern;
     }
 
     public enum MetricClientType {
@@ -131,9 +137,16 @@ public class Jmx2GraphiteConfiguration {
     private void setFilterPatterns(Config config) {
         try {
             whiteListPattern = Pattern.compile(config.hasPath(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX) ?
-                    config.getString(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX) : ACCEPT_ALL_REGEX);
+                    config.getString(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX) : WHITE_LIST_ACCEPT_ALL_REGEX);
         } catch (Exception e) {
-            whiteListPattern = Pattern.compile(ACCEPT_ALL_REGEX);
+            whiteListPattern = Pattern.compile(WHITE_LIST_ACCEPT_ALL_REGEX);
+        }
+
+        try {
+            blackListPattern = Pattern.compile(config.hasPath(Jmx2GraphiteJavaAgent.BLACK_LIST_REGEX) ?
+                    config.getString(Jmx2GraphiteJavaAgent.BLACK_LIST_REGEX) : BLACK_LIST_ACCEPT_ALL_REGEX);
+        } catch (Exception e) {
+            blackListPattern = Pattern.compile(BLACK_LIST_ACCEPT_ALL_REGEX);
         }
 
     }

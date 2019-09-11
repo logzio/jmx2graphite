@@ -20,6 +20,7 @@ public class MetricsPipeline {
     private static final Logger logger = LoggerFactory.getLogger(MetricsPipeline.class);
 
     private final Pattern beansWhiteListPattern;
+    private final Pattern beansBlackListPattern;
 
     private int pollingIntervalSeconds;
 
@@ -35,6 +36,7 @@ public class MetricsPipeline {
         this.client = client;
         this.pollingIntervalSeconds = conf.getMetricsPollingIntervalInSeconds();
         this.beansWhiteListPattern = conf.getWhiteListPattern();
+        this.beansBlackListPattern = conf.getBlackListPattern();
 
     }
 
@@ -42,6 +44,10 @@ public class MetricsPipeline {
         List<MetricBean> filteredBeans = beans.stream()
                 .filter(bean -> beansWhiteListPattern.matcher(bean.getName()).find())
                 .collect(Collectors.toList());
+
+        filteredBeans.removeAll(beans.stream()
+                .filter((bean -> beansBlackListPattern.matcher(bean.getName()).find()))
+                .collect(Collectors.toList()));
         return filteredBeans;
     }
 
@@ -55,7 +61,7 @@ public class MetricsPipeline {
                     sw.stop().elapsed(TimeUnit.MILLISECONDS),
                     new Date(TimeUnit.SECONDS.toMillis(pollingWindowStartSeconds)));
             List<MetricBean> filteredBeans = getFilteredBeans(beans);
-            logger.info("Filtered {} metrics out of {} after white/blacklisting", beans.size() - filteredBeans.size(), beans.size());
+            logger.info("Filtered out {} metrics out of {} after white/blacklisting", beans.size() - filteredBeans.size(), beans.size());
 
             sw.reset().start();
             List<MetricValue> metrics = client.getMetrics(filteredBeans);
