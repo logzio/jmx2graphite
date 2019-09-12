@@ -5,9 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -41,11 +39,12 @@ public class MetricsPipeline {
     }
 
     public List<MetricBean> getFilteredBeans(List<MetricBean> beans) {
-        List<MetricBean> filterWhiteBlackList = beans.stream()
-                    .filter(bean -> beansWhiteListPattern == null ||  beansWhiteListPattern.matcher(bean.getName()).find())
-                    .filter(bean -> beansBlackListPattern == null || !beansBlackListPattern.matcher(bean.getName()).find())
+        Optional<Pattern> whitelist = Optional.ofNullable(beansWhiteListPattern);
+        Optional<Pattern> blacklist = Optional.ofNullable(beansBlackListPattern);
+        return beans.stream()
+                    .filter(bean -> !whitelist.isPresent() || beansWhiteListPattern.matcher(bean.getName()).find())
+                    .filter(bean -> !blacklist.isPresent() || !beansBlackListPattern.matcher(bean.getName()).find())
                 .collect(Collectors.toList());
-        return filterWhiteBlackList;
     }
 
     private List<MetricValue> poll() {
