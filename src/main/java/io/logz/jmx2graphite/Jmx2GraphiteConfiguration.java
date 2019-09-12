@@ -133,15 +133,15 @@ public class Jmx2GraphiteConfiguration {
 
     private void setFilterPatterns(Config config) {
         try {
-            whiteListPattern = config.hasPath(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX) ?
-                    Pattern.compile(config.getString(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX)) : null;
+            whiteListPattern = config.hasPath(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX_CONF_JOLOKIA) ?
+                    Pattern.compile(config.getString(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX_CONF_JOLOKIA)) : null;
         } catch (Exception e) {
             whiteListPattern = null;
         }
 
         try {
-            blackListPattern = config.hasPath(Jmx2GraphiteJavaAgent.BLACK_LIST_REGEX) ?
-                    Pattern.compile(config.getString(Jmx2GraphiteJavaAgent.BLACK_LIST_REGEX)) : null;
+            blackListPattern = config.hasPath(Jmx2GraphiteJavaAgent.BLACK_LIST_REGEX_CONF_JOLOKIA) ?
+                    Pattern.compile(config.getString(Jmx2GraphiteJavaAgent.BLACK_LIST_REGEX_CONF_JOLOKIA)) : null;
         } catch (Exception e) {
             blackListPattern = null;
         }
