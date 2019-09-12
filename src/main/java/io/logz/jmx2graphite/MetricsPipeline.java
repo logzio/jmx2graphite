@@ -41,14 +41,11 @@ public class MetricsPipeline {
     }
 
     public List<MetricBean> getFilteredBeans(List<MetricBean> beans) {
-        List<MetricBean> filteredBeans = beans.stream()
-                .filter(bean -> beansWhiteListPattern.matcher(bean.getName()).find())
+        List<MetricBean> filterWhiteBlackList = beans.stream()
+                    .filter(bean -> beansWhiteListPattern == null ||  beansWhiteListPattern.matcher(bean.getName()).find())
+                    .filter(bean -> beansBlackListPattern == null || !beansBlackListPattern.matcher(bean.getName()).find())
                 .collect(Collectors.toList());
-
-        filteredBeans.removeAll(beans.stream()
-                .filter((bean -> beansBlackListPattern.matcher(bean.getName()).find()))
-                .collect(Collectors.toList()));
-        return filteredBeans;
+        return filterWhiteBlackList;
     }
 
     private List<MetricValue> poll() {
