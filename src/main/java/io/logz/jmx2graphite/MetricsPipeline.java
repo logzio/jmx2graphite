@@ -5,7 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -17,8 +20,8 @@ import java.util.stream.Collectors;
 public class MetricsPipeline {
     private static final Logger logger = LoggerFactory.getLogger(MetricsPipeline.class);
 
-    private final Pattern beansWhiteListPattern;
-    private final Pattern beansBlackListPattern;
+    private final Optional<Pattern> beansWhiteListPattern;
+    private final Optional<Pattern> beansBlackListPattern;
 
     private int pollingIntervalSeconds;
 
@@ -39,11 +42,9 @@ public class MetricsPipeline {
     }
 
     public List<MetricBean> getFilteredBeans(List<MetricBean> beans) {
-        Optional<Pattern> whitelist = Optional.ofNullable(beansWhiteListPattern);
-        Optional<Pattern> blacklist = Optional.ofNullable(beansBlackListPattern);
         return beans.stream()
-                    .filter(bean -> !whitelist.isPresent() || beansWhiteListPattern.matcher(bean.getName()).find())
-                    .filter(bean -> !blacklist.isPresent() || !beansBlackListPattern.matcher(bean.getName()).find())
+                    .filter(bean -> beansWhiteListPattern.isPresent() ? beansWhiteListPattern.get().matcher(bean.getName()).find() : true)
+                    .filter(bean -> beansBlackListPattern.isPresent() ? !beansBlackListPattern.get().matcher(bean.getName()).find() : true)
                 .collect(Collectors.toList());
     }
 

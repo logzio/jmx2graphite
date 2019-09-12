@@ -6,9 +6,11 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * @author amesika
@@ -17,8 +19,8 @@ public class Jmx2GraphiteConfiguration {
     private String jolokiaFullUrl;
 
     private Graphite graphite;
-    private Pattern whiteListPattern;
-    private Pattern blackListPattern;
+    private Optional<Pattern> whiteListPattern;
+    private Optional<Pattern> blackListPattern;
     /* Short name of the sampled service, required = false */
     private String serviceName = null;
 
@@ -41,11 +43,11 @@ public class Jmx2GraphiteConfiguration {
         return graphiteProtocol;
     }
 
-    public Pattern getWhiteListPattern() {
+    public Optional<Pattern> getWhiteListPattern() {
         return whiteListPattern;
     }
 
-    public Pattern getBlackListPattern() {
+    public Optional<Pattern> getBlackListPattern() {
         return blackListPattern;
     }
 
@@ -133,17 +135,15 @@ public class Jmx2GraphiteConfiguration {
 
     private void setFilterPatterns(Config config) {
         try {
-            whiteListPattern = config.hasPath(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX_CONF_JOLOKIA) ?
-                    Pattern.compile(config.getString(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX_CONF_JOLOKIA)) : null;
-        } catch (Exception e) {
-            whiteListPattern = null;
+            whiteListPattern = Optional.of(Pattern.compile(config.getString(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX_CONF_JOLOKIA)));
+        } catch (PatternSyntaxException e) {
+            whiteListPattern = Optional.empty();
         }
 
         try {
-            blackListPattern = config.hasPath(Jmx2GraphiteJavaAgent.BLACK_LIST_REGEX_CONF_JOLOKIA) ?
-                    Pattern.compile(config.getString(Jmx2GraphiteJavaAgent.BLACK_LIST_REGEX_CONF_JOLOKIA)) : null;
-        } catch (Exception e) {
-            blackListPattern = null;
+            blackListPattern = Optional.of(Pattern.compile(config.getString(Jmx2GraphiteJavaAgent.BLACK_LIST_REGEX_CONF_JOLOKIA)));
+        } catch (PatternSyntaxException e) {
+            blackListPattern = Optional.empty();
         }
     }
 
