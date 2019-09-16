@@ -1,6 +1,7 @@
 package io.logz.jmx2graphite;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -135,14 +136,18 @@ public class Jmx2GraphiteConfiguration {
 
     private void setFilterPatterns(Config config) {
         try {
-            whiteListPattern = Optional.of(Pattern.compile(config.getString(Jmx2GraphiteJavaAgent.WHITE_LIST_REGEX_CONF_JOLOKIA)));
-        } catch (PatternSyntaxException e) {
+            whiteListPattern = Optional.of(Pattern.compile(config.getString("filter.whitelistRegEx")));
+        } catch (PatternSyntaxException | ConfigException.WrongType e) {
+           throw new IllegalArgumentException("can't parse whitelist regex:" + e.getMessage(), e);
+        } catch (ConfigException.Missing e) {
             whiteListPattern = Optional.empty();
         }
 
         try {
-            blackListPattern = Optional.of(Pattern.compile(config.getString(Jmx2GraphiteJavaAgent.BLACK_LIST_REGEX_CONF_JOLOKIA)));
-        } catch (PatternSyntaxException e) {
+            blackListPattern = Optional.of(Pattern.compile(config.getString("filter.blacklistRegEx")));
+        } catch (PatternSyntaxException | ConfigException.WrongType e) {
+            throw new IllegalArgumentException("can't parse blacklist regex:" + e.getMessage(), e);
+        } catch (ConfigException.Missing e) {
             blackListPattern = Optional.empty();
         }
     }
