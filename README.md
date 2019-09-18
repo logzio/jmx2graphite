@@ -52,6 +52,10 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 - GRAPHITE_PORT: Protocol port of graphite. Defaults to 2004.
 - SERVICE_HOST: By default the host is taken from Jolokia URL and serves as the service host, unless you use this variable.
 - INTERVAL_IN_SEC: By default 30 seconds unless you use this variable.
+- LOG_LEVEL: Configure Log Level [any of OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL]
+- WHITE_LIST_REGEX: filter out unwanted metrics with whitelist regex.
+- BLACK_LIST_REGEX: filter out unwanted metrics with blacklist regex.
+
 
 ### Docker with config file
 Create a .conf file, set the input parameter and provide it to the docker.
@@ -92,9 +96,7 @@ This lib can also get the metrics from MBean Platform instead of jolokia. In ord
 - The parameters are key-value pairs, in the format of key=value;key=value;... or key=value,key=value,...
 - The parameters names and functions are exactly as described in Environment Variables section. (Except no need to specify JOLOKIA_URL of course)
 - The javaagent.jar is an "Uber-Jar" that shades all of its dependencies inside, to prevent class collisions
-- For example: java -javaagent:jmx2graphite.jar=GRAPHITE_HOSTNAME=graphite.example.com,SERVICE_NAME=PROD.MyAwesomeCategory example.jar
-- To configure Log Level add the configuration LOG_LEVEL=[any of OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL]
-  
+- For example: java -javaagent:jmx2graphite.jar=GRAPHITE_HOSTNAME=graphite.example.com,SERVICE_NAME=PROD.MyAwesomeCategory example.jar  
    
 
 # How to expose JMX Metrics using Jolokia Agent
@@ -246,6 +248,10 @@ docker push logzio/jmx2graphite
 
 
 # Changelog
+- v1.4.0
+  - add an option to filter out unwanted metrics with white/black-list regex
+- v1.3.2
+  - add an option to configure the omitted log level.
 - v1.3.1
   - support external config file when using with jolokia agent 
   - provide docker for jmx2graphite when using with jolokia agent

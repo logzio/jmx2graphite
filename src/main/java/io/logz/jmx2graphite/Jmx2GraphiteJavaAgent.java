@@ -91,6 +91,10 @@ public class Jmx2GraphiteJavaAgent {
                 return "graphite.protocol";
             case "LOG_LEVEL":
                 return "log.level";
+            case "WHITE_LIST_REGEX":
+                return "filter.whitelistRegEx";
+            case "BLACK_LIST_REGEX":
+                return "filter.blacklistRegEx";
             default:
                 throw new IllegalConfiguration("Unknown configuration option: " + key);
         }

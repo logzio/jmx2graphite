@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -17,6 +19,9 @@ import java.util.stream.Collectors;
 
 public class MetricsPipeline {
     private static final Logger logger = LoggerFactory.getLogger(MetricsPipeline.class);
+
+    private final Optional<Pattern> beansWhiteListPattern;
+    private final Optional<Pattern> beansBlackListPattern;
 
     private int pollingIntervalSeconds;
 
@@ -31,6 +36,16 @@ public class MetricsPipeline {
                                                  conf.getGraphiteProtocol());
         this.client = client;
         this.pollingIntervalSeconds = conf.getMetricsPollingIntervalInSeconds();
+        this.beansWhiteListPattern = conf.getWhiteListPattern();
+        this.beansBlackListPattern = conf.getBlackListPattern();
+
+    }
+
+    public List<MetricBean> getFilteredBeans(List<MetricBean> beans) {
+        return beans.stream()
+                    .filter(bean -> beansWhiteListPattern.isPresent() ? beansWhiteListPattern.get().matcher(bean.getName()).find() : true)
+                    .filter(bean -> beansBlackListPattern.isPresent() ? !beansBlackListPattern.get().matcher(bean.getName()).find() : true)
+                .collect(Collectors.toList());
     }
 
     private List<MetricValue> poll() {
@@ -38,12 +53,15 @@ public class MetricsPipeline {
             long pollingWindowStartSeconds = getPollingWindowStartSeconds();
             Stopwatch sw = Stopwatch.createStarted();
             List<MetricBean> beans = client.getBeans();
+
             logger.info("Found {} metric beans. Time = {}ms, for {}", beans.size(),
                     sw.stop().elapsed(TimeUnit.MILLISECONDS),
                     new Date(TimeUnit.SECONDS.toMillis(pollingWindowStartSeconds)));
+            List<MetricBean> filteredBeans = getFilteredBeans(beans);
+            logger.info("Filtered out {} metrics out of {} after white/blacklisting", beans.size() - filteredBeans.size(), beans.size());
 
             sw.reset().start();
-            List<MetricValue> metrics = client.getMetrics(beans);
+            List<MetricValue> metrics = client.getMetrics(filteredBeans);
             logger.info("metrics fetched. Time: {} ms; Metrics: {}", sw.stop().elapsed(TimeUnit.MILLISECONDS), metrics.size());
             if (logger.isTraceEnabled()) printToFile(metrics);
             return changeTimeTo(pollingWindowStartSeconds, metrics);
