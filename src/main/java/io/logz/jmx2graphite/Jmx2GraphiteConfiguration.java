@@ -116,7 +116,7 @@ public class Jmx2GraphiteConfiguration {
         } else {
             graphiteWriteTimeoutMs = Math.round(0.7f * TimeUnit.SECONDS.toMillis(metricsPollingIntervalInSeconds));
         }
-        setFilterPatterns(config);
+        parseFilterPatterns(config);
 
         if(config.hasPath("log.level")) {
             logLevel = config.getString("log.level");
@@ -134,7 +134,7 @@ public class Jmx2GraphiteConfiguration {
         return null;
     }
 
-    private void setFilterPatterns(Config config) {
+    private void parseFilterPatterns(Config config) {
         try {
             whiteListPattern = Optional.of(Pattern.compile(config.getString("filter.whitelistRegEx")));
         } catch (PatternSyntaxException | ConfigException.WrongType e) {
