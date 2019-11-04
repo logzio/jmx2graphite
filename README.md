@@ -129,7 +129,8 @@ We will install Graphite using a great docker image by [hopsoft](https://github.
       -p 2003:2003 \
       -p 2004:2004 \
       -p 8125:8125/udp \
-      -p 8126:8126 
+      -p 8126:8126 \
+      hopsoft/graphite-statsd
     ```
 2. Now, let's copy out all of its existing configuration files so it will be easy to modify. I will assume you will place it at `/home/ubuntu`
     ```
