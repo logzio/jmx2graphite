@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.logz</groupId>
     <artifactId>jmx2graphite</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
 
     <build>
         <plugins>
@@ -114,13 +114,13 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.9.9</version>
+            <version>2.9.10</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.9.2</version>
+            <version>2.9.10.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -132,7 +132,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.1.34.Final</version>
+            <version>4.1.42.Final</version>
             <scope>test</scope>
         </dependency>
         <dependency>
