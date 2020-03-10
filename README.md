@@ -249,6 +249,8 @@ docker push logzio/jmx2graphite
 
 
 # Changelog
+- v1.4.3
+  - update dependencies
 - v1.4.0
   - add an option to filter out unwanted metrics with white/black-list regex
 - v1.3.2
