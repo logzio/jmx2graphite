@@ -249,6 +249,9 @@ docker push logzio/jmx2graphite
 
 
 # Changelog
+- v1.4.4
+  - dependencies
+  - remove minor deprecation
 - v1.4.3
   - update dependencies
 - v1.4.0
