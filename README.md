@@ -64,7 +64,7 @@ See our [sample config file](application.conf)].
 
 You can find a complete list of the required parameters [here](#using-bash--jolokia-agent)
 ```bash
-docker run -d -name jmx2graphtite -v path/to/config/myConfig.conf:application.conf logizo/jmx2graphite
+docker run -d --name jmx2graphite -v path/to/config/myConfig.conf:/application.conf logzio/jmx2graphite
 ```
 **Note**: The config file at the docker end must be name application.conf
 
