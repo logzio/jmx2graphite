@@ -438,8 +438,6 @@ public class PickledGraphite implements GraphiteSender {
                     }
                     throw e;
                 }
-            } catch (IOException e) {
-                throw Throwables.propagate(e);
             }
         }
     }

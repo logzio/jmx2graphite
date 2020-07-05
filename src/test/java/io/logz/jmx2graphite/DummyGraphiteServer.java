@@ -84,7 +84,7 @@ public class DummyGraphiteServer {
             Closeables.close(clientSocket, true);
             Closeables.close(serverSocket, true);
         } catch (IOException e) {
-            throw Throwables.propagate(e);
+            logger.error("got IO exception while closing: {}", e);
         }
         logger.info("Waiting for server to finish shutdown...");
         try {
@@ -93,7 +93,7 @@ public class DummyGraphiteServer {
                 throw new RuntimeException("Timed out on waiting for dummy graphite server shutdown");
             }
         } catch (InterruptedException e) {
-            throw Throwables.propagate(e);
+            logger.error("got interrupt while closing: {}", e);
         }
         logger.info("Dummy graphite server closed");
 
