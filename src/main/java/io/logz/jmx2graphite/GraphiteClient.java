@@ -5,6 +5,12 @@ import com.codahale.metrics.graphite.GraphiteSender;
 import com.codahale.metrics.graphite.GraphiteUDP;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
+
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,39 +90,60 @@ public class GraphiteClient implements Closeable {
         }
         return sb.toString();
     }
-
-    /**
-     * send a list of metrics to graphite
-     * @param metrics
-     * @throws GraphiteWriteFailed
-     */
-
-    public void sendMetrics(List<MetricValue> metrics) throws GraphiteWriteFailed {
-        try {
-            if (!graphite.isConnected()) {
-                graphite.connect();
-            }
-        } catch (Exception e) {
-            throw new GraphiteWriteFailed("Failed connecting to Graphite. Error = "+e.getClass()+": "+e.getMessage(), e);
-        }
-
-        int failuresBefore = graphite.getFailures();
-        for (MetricValue mv : metrics) {
-            try {
-                graphite.send(metricsPrefix + mv.getName(), mv.getValue().toString(), mv.getTimestampSeconds());
-            } catch (Exception e) {
-                throw new GraphiteWriteFailed("Failed writing metric to graphite. Error = "+e.getMessage(), e);
-            }
-        }
-        try {
-            graphite.flush();
-        } catch (Exception e) {
-            throw new GraphiteWriteFailed("Failed writing metrics to graphite (flush). Error = "+e.getMessage(), e);
-        }
-        failuresAtLastWrite = graphite.getFailures() - failuresBefore;
+    
+    private boolean isBrokenPipeException(Throwable t) {
+    	if (t instanceof GraphiteWriteFailed) {
+    		Throwable cause = ExceptionUtils.getCause(t);
+    		String message = cause == null? t.getMessage() : cause.getMessage();
+    		return StringUtils.containsIgnoreCase(message, "broken pipe");
+    	}
+    	return false;
     }
 
-    public int getFailedAtLastWrite() {
+	/**
+	 * send a list of metrics to graphite
+	 * 
+	 * @param metrics
+	 * @throws GraphiteWriteFailed
+	 */
+	public void sendMetrics(List<MetricValue> metrics) throws GraphiteWriteFailed {
+		RetryPolicy<Object> policy = new RetryPolicy<Object>().handleIf(this::isBrokenPipeException)
+				.onFailedAttempt(e -> {
+					logger.warn(e.getLastFailure().toString());
+					graphite.close();
+				});
+		Failsafe.with(policy).run(() -> sendMetricsInternal(metrics));
+	}
+
+	private void sendMetricsInternal(List<MetricValue> metrics) throws GraphiteWriteFailed {
+
+		try {
+			if (!graphite.isConnected()) {
+				graphite.connect();
+			}
+		} catch (Exception e) {
+			throw new GraphiteWriteFailed(
+					"Failed connecting to Graphite. Error = " + e.getClass() + ": " + e.getMessage(), e);
+		}
+
+		int failuresBefore = graphite.getFailures();
+		for (MetricValue mv : metrics) {
+			try {
+				graphite.send(metricsPrefix + mv.getName(), mv.getValue().toString(), mv.getTimestampSeconds());
+			} catch (Exception e) {
+				throw new GraphiteWriteFailed("Failed writing metric to graphite. Error = " + e.getMessage(), e);
+			}
+		}
+		try {
+			graphite.flush();
+		} catch (Exception e) {
+			throw new GraphiteWriteFailed("Failed writing metrics to graphite (flush). Error = " + e.getMessage(), e);
+		}
+		failuresAtLastWrite = graphite.getFailures() - failuresBefore;
+
+	}
+
+	public int getFailedAtLastWrite() {
         return failuresAtLastWrite;
     }
 
