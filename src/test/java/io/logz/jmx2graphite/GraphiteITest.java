@@ -75,7 +75,7 @@ public class GraphiteITest {
     }
 
     @Test
-    public void testWrite() {
+    public void testResilienceToGraphiteRestart() {
         GraphiteClient graphite = createGraphiteClient();
 
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC")).truncatedTo(MINUTES);
@@ -127,7 +127,7 @@ public class GraphiteITest {
         int socketTimeout = (int) Duration.ofSeconds(5).toMillis();
         int writeTimeoutMs = (int) Duration.ofSeconds(5).toMillis();
 
-        return new GraphiteClient(TEST_SERVICE_HOST, TEST_SERVICE_NAME, "localhost", 2003, // graphiteContainer.getMappedPort(2003),
+        return new GraphiteClient(TEST_SERVICE_HOST, TEST_SERVICE_NAME, "localhost", 2003, 
                 connectTimeout, socketTimeout, writeTimeoutMs, GraphiteProtocol.TCP);
     }
 
