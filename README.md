@@ -1,3 +1,5 @@
+![example workflow name](https://github.com/logzio/jmx2graphite/workflows/Build/badge.svg)
+
 # jmx2graphite
 
 jmx2graphite is a one liner tool for polling JMX and writes into Graphite (every 30 seconds by default). You install & run it on every machine you want to poll its JMX.
