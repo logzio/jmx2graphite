@@ -1,9 +1,9 @@
-name: Java CI
+name: CI
 
-on: [push]
+on: [ push ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,4 +20,9 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Build with Maven
         run: mvn -B package --file pom.xml
-
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1.5
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          files: target/surefire-reports/**/*.xml
