@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.ConnectException;
 import java.time.Duration;
 import java.time.ZoneId;
@@ -41,7 +42,7 @@ public class GraphiteITest {
     private static File tempDir;
 
     @BeforeClass
-    public static void beforeClass() {
+    public static void beforeClass() throws IOException {
         beforeClassStopwatch = Stopwatch.createStarted();
         tempDir = createTempDir();
 
@@ -57,14 +58,6 @@ public class GraphiteITest {
         graphiteContainer.setPortBindings(Lists.newArrayList("2003:2003", "1180:80"));
         graphiteContainer.start();
         beforeClassStopwatch.stop();
-    }
-
-    private static File createTempDir() {
-        File tempDir = new File("/tmp/mytest" + System.currentTimeMillis());
-        if (!tempDir.mkdirs())
-            throw new RuntimeException("failed creating dir");
-        logger.info("Logging to {}", tempDir.getAbsolutePath());
-        return tempDir;
     }
 
     @AfterClass
@@ -136,4 +129,12 @@ public class GraphiteITest {
         metricValueList.add(new MetricValue(metricName, value, epochSeconds));
         return metricValueList;
     }
+
+	private static File createTempDir() throws IOException {
+		final File tempFile = File.createTempFile("mytest", "");
+	    if (!tempFile.delete()) throw new RuntimeException("Failed deleting temporary directory ("+tempFile.getAbsolutePath()+") while creating a temp dir");
+	    if (!tempFile.mkdirs()) throw new RuntimeException("Failed creating temporary directory: "+tempFile.getAbsolutePath());;
+	    logger.info("Logging to {}", tempFile.getAbsolutePath());
+	    return tempFile;
+	}
 }
