@@ -1,7 +1,3 @@
 jmx2graphite.iml
 .idea/
 /target/
-.gradle/
-gradlew
-gradlew.bat
-gradle/

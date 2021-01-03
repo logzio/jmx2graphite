@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.logz</groupId>
     <artifactId>jmx2graphite</artifactId>
-    <version>1.4.4</version>
+    <version>0-SNAPSHOT</version>
 
     <build>
         <plugins>
