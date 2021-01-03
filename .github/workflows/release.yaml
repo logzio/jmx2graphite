@@ -22,8 +22,11 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+      - name: Determine version
+        run: version=`echo '${{ github.ref }}' | cut -f2 -d 'v'`; echo '::set-output name=VERSION::$version'
+        id: determine-version
       - name: Set version
-        run: mvn versions:set -DnewVersion=${{ github.ref }}
+        run: mvn versions:set -DnewVersion=${{ steps.determine-version.outputs.VERSION }}
       - name: Build with Maven
         run: mvn -B package --file pom.xml
       - name: Upload binaries to GitHub release
@@ -50,6 +53,6 @@ jobs:
           push: true
           tags: |
              logzio/jmx2graphite:latest
-             logzio/jmx2graphite:${{ github.ref }}
+             logzio/jmx2graphite:${{ steps.determine-version.outputs.VERSION }}
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
