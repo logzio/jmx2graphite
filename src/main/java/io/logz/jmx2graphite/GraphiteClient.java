@@ -1,8 +1,18 @@
 package io.logz.jmx2graphite;
 
-import static io.logz.jmx2graphite.GraphiteProtocol.TCP;
-import static io.logz.jmx2graphite.GraphiteProtocol.UDP;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteSender;
+import com.codahale.metrics.graphite.GraphiteUDP;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import net.jodah.failsafe.Failsafe;
+import net.jodah.failsafe.RetryPolicy;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.net.SocketFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -12,21 +22,9 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.List;
 
-import javax.net.SocketFactory;
+import static io.logz.jmx2graphite.GraphiteProtocol.TCP;
+import static io.logz.jmx2graphite.GraphiteProtocol.UDP;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteSender;
-import com.codahale.metrics.graphite.GraphiteUDP;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
 
 public class GraphiteClient implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(GraphiteClient.class);
