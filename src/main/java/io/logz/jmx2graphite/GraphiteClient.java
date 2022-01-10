@@ -15,11 +15,14 @@ import org.slf4j.LoggerFactory;
 import javax.net.SocketFactory;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static io.logz.jmx2graphite.GraphiteProtocol.TCP;
@@ -28,6 +31,7 @@ import static io.logz.jmx2graphite.GraphiteProtocol.UDP;
 
 public class GraphiteClient implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(GraphiteClient.class);
+    private static final String ENCODING = StandardCharsets.UTF_8.name();
     private GraphiteSender graphite;
     private String metricsPrefix;
     private int failuresAtLastWrite = 0;
@@ -85,7 +89,13 @@ public class GraphiteClient implements Closeable {
                 sb.append(c);
             }
         }
-        return sb.toString();
+
+        try {
+            return URLEncoder.encode(sb.toString(), ENCODING);
+        } catch (UnsupportedEncodingException e) {
+            logger.error("Unsupported encoding {}.", ENCODING, e);
+            return sb.toString();
+        }
     }
 
     /**
