@@ -93,7 +93,7 @@ public class GraphiteClient implements Closeable {
         try {
             return URLEncoder.encode(sb.toString(), ENCODING);
         } catch (UnsupportedEncodingException e) {
-            logger.error("Unsupported encoding {}.", ENCODING, e);
+            logger.error("Unsupported encoding {} for metric name {}.", ENCODING, s);
             return sb.toString();
         }
     }
