@@ -1,5 +1,7 @@
 package io.logz.jmx2graphite;
 
+import static io.logz.jmx2graphite.GraphiteClient.sanitizeMetricName;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.Lists;
@@ -14,9 +16,9 @@ import org.slf4j.LoggerFactory;
  * @author amesika
  *
  */
-public class TestGraphiteClient {
+public class GraphiteClientTest {
 
-    private final static Logger logger = LoggerFactory.getLogger(TestGraphiteClient.class);
+    private final static Logger logger = LoggerFactory.getLogger(GraphiteClientTest.class);
 
     private int port = new Random().nextInt(65000 - 10000) + 10000;
     private DummyGraphiteServer server;
@@ -89,5 +91,14 @@ public class TestGraphiteClient {
             fail("Send metrics failed, this shouldn't happen");
         }
 
+    }
+
+    @Test
+    public void testSanitizeMetricName() {
+        String sanitizedMetricName = sanitizeMetricName("local,project com.zaxxer.hikari type_Pool:334|613-(HikariCP=reader-1).TotalConnections");
+
+        String expectedSanitizedMetricName = "local.project-com.zaxxer.hikari-type_Pool.334%7C613-%28HikariCP_reader-1%29.TotalConnections";
+
+        assertEquals(sanitizedMetricName, expectedSanitizedMetricName);
     }
 }

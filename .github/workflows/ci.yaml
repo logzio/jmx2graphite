@@ -1,8 +1,24 @@
 name: Build
 
-on: [ push ]
+on:
+  pull_request:
+  push:
+    branches:
+      - master
 
 jobs:
+  # Needed to publish Unit Test Results to Pull Requests
+  # See: https://github.com/EnricoMi/publish-unit-test-result-action#support-fork-repositories-and-dependabot-branches
+  event_file:
+    name: "Event File"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: Event File
+          path: ${{ github.event_path }}
+
   build-and-test:
     runs-on: ubuntu-latest
 
@@ -20,9 +36,10 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Build with Maven
         run: mvn -B package --file pom.xml
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1.5
+      - name: Upload Test Results
         if: always()
+        uses: actions/upload-artifact@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          files: target/surefire-reports/**/*.xml
+          name: Unit Test Results
+          path: |
+            target/surefire-reports/**/*.xml
