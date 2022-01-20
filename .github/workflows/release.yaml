@@ -21,7 +21,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Determine version
-        run: version=`echo '${{ github.ref }}' | cut -f2 -d 'v'`; echo "::set-output name=VERSION::$version"
+        run: version=`echo '${{ github.ref }}' | cut -d '/' -f 3`; echo "::set-output name=VERSION::$version"
         id: determine-version
       - name: Set version
         run: mvn versions:set -DnewVersion=${{ steps.determine-version.outputs.VERSION }}
