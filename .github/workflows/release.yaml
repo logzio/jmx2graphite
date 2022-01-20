@@ -1,10 +1,8 @@
 name: Release
 
 on:
-  push:
-    # Sequence of patterns matched against refs/tags
-    tags:
-      - '*' # Push events to matching *, i.e. 1.0, 20.15.10
+  release:
+    types: [ published ]
 
 jobs:
   release-github:
