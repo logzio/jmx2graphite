@@ -42,7 +42,8 @@ jobs:
     needs: [release-github]
     steps:
       - name: Determine version
-        run: version=`echo '${{ github.ref }}' | cut -f2 -d 'v'`; echo "::set-output name=VERSION::$version"
+        # ref example: refs/tags/1.6.0
+        run: version=`echo '${{ github.ref }}' | cut -d '/' -f 3`; echo "::set-output name=VERSION::$version"
         id: determine-version
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
