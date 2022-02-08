@@ -38,7 +38,7 @@ public class Jmx2GraphiteJavaAgent {
 
         Jmx2GraphiteConfiguration jmx2GraphiteConfiguration = new Jmx2GraphiteConfiguration(finalConfig);
 
-        Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration);
+        Jmx2Graphite main = new Jmx2Graphite(jmx2GraphiteConfiguration, true);
         logger.info("Initiated new java agent based Jmx2Graphite instance");
 
         try {
@@ -75,6 +75,8 @@ public class Jmx2GraphiteJavaAgent {
                 return "graphite.hostname";
             case "GRAPHITE_PORT":
                 return "graphite.port";
+            case "GRAPHITE_SSL":
+                return "graphite.ssl";
             case "SERVICE_NAME":
                 return "service.name";
             case "SERVICE_HOST":

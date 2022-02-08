@@ -52,12 +52,12 @@ there are two ways to specify the host in the jolokia URL so this URL will be re
 **Optional environment variables**
 
 - GRAPHITE_PORT: Protocol port of graphite. Defaults to 2004.
+- GRAPHITE_SSL: Boolean to enable SSL sockets. Standard `javax.net.ssl` system properties are used for keystores, etc.
 - SERVICE_HOST: By default the host is taken from Jolokia URL and serves as the service host, unless you use this variable.
 - INTERVAL_IN_SEC: By default 30 seconds unless you use this variable.
 - LOG_LEVEL: Configure Log Level [any of OFF, FATAL, ERROR, WARN, INFO, DEBUG, TRACE, ALL]
 - WHITE_LIST_REGEX: filter out unwanted metrics with whitelist regex.
 - BLACK_LIST_REGEX: filter out unwanted metrics with blacklist regex.
-
 
 ### Docker with config file
 Create a .conf file, set the input parameter and provide it to the docker.

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -37,7 +38,7 @@ public class GraphiteClient implements Closeable {
     private int failuresAtLastWrite = 0;
 
     public GraphiteClient(String serviceHost, String serviceName, String graphiteHostname, int graphitePort,
-            int connectTimeout, int socketTimeout, int writeTimeoutMs, GraphiteProtocol protocol) {
+            boolean ssl, int connectTimeout, int socketTimeout, int writeTimeoutMs, GraphiteProtocol protocol) {
         List<String> prefixElements = Lists.newArrayList();
         if (serviceName != null && !serviceName.isEmpty()) {
             prefixElements.add(sanitizeMetricName(serviceName));
@@ -54,7 +55,7 @@ public class GraphiteClient implements Closeable {
         logger.info("Graphite metrics prefix: {}", metricsPrefix);
         logger.info("Graphite Client: using writeTimeoutMs of {} [ms]. Establishing connection...", writeTimeoutMs);
 
-        SocketFactory socketFactory = new SocketFactoryWithTimeouts(connectTimeout, socketTimeout);
+        SocketFactory socketFactory = new SocketFactoryWithTimeouts(connectTimeout, socketTimeout, ssl);
         if (protocol == UDP) {
             graphite = new GraphiteUDP(new InetSocketAddress(graphiteHostname, graphitePort));
         } else if (protocol == TCP) {
@@ -157,19 +158,20 @@ public class GraphiteClient implements Closeable {
     }
 
     private static class SocketFactoryWithTimeouts extends SocketFactory {
-        private SocketFactory socketFactory = SocketFactory.getDefault();
+        private final SocketFactory socketFactory;
 
         // FIXME make it use this connect timeout (I can't find a way to do it
         private int connectTimeout;
         private int socketTimeout;
 
-        public SocketFactoryWithTimeouts(int connectTimeout, int socketTimeout) {
+        public SocketFactoryWithTimeouts(int connectTimeout, int socketTimeout, boolean ssl) {
             this.connectTimeout = connectTimeout;
             this.socketTimeout = socketTimeout;
+            this.socketFactory = ssl ? SSLSocketFactory.getDefault() : SocketFactory.getDefault();
         }
 
         public static SocketFactory getDefault() {
-            return new SocketFactoryWithTimeouts(5, 10);
+            return new SocketFactoryWithTimeouts(5, 10, false);
         }
 
         @Override

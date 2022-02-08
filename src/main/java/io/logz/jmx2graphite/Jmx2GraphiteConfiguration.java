@@ -60,6 +60,7 @@ public class Jmx2GraphiteConfiguration {
     private class Graphite {
         public String hostname;
         public int port;
+        public boolean ssl;
     }
 
     public Jmx2GraphiteConfiguration(Config config) throws IllegalConfiguration {
@@ -104,6 +105,7 @@ public class Jmx2GraphiteConfiguration {
         graphite = new Graphite();
         graphite.hostname = config.getString("graphite.hostname");
         graphite.port = config.getInt("graphite.port");
+        graphite.ssl = config.getBoolean("graphite.ssl");
         metricsPollingIntervalInSeconds = config.getInt("metricsPollingIntervalInSeconds");
 
         serviceName = config.getString("service.name");
@@ -174,6 +176,14 @@ public class Jmx2GraphiteConfiguration {
 
     public void setGraphitePort(int graphitePort) {
         this.graphite.port = graphitePort;
+    }
+
+    public boolean getGraphiteSsl() {
+        return graphite.ssl;
+    }
+
+    public void setGraphiteSsl(boolean ssl) {
+        this.graphite.ssl = ssl;
     }
 
     public String getServiceName() {

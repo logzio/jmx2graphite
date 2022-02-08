@@ -67,7 +67,7 @@ public class GraphiteClientTest {
         int connectTimeout = 1000;
         int socketTimeout = 1000;
         GraphiteClient client = new GraphiteClient("bla-host.com", "bla-service", "localhost",
-                                                   port, connectTimeout, socketTimeout, 20000,
+                                                   port, false, connectTimeout, socketTimeout, 20000,
                                                    null);
 
         ArrayList<MetricValue> dummyMetrics = Lists.newArrayList(new MetricValue("dice", 4, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())));

@@ -31,7 +31,7 @@ public class MetricsPipeline {
     public MetricsPipeline(Jmx2GraphiteConfiguration conf, MBeanClient client) {
 
         this.graphiteClient = new GraphiteClient(conf.getServiceHost(), conf.getServiceName(), conf.getGraphiteHostname(),
-                                                 conf.getGraphitePort(), conf.getGraphiteConnectTimeout(),
+                                                 conf.getGraphitePort(), conf.getGraphiteSsl(), conf.getGraphiteConnectTimeout(),
                                                  conf.getGraphiteSocketTimeout(), conf.getGraphiteWriteTimeoutMs(),
                                                  conf.getGraphiteProtocol());
         this.client = client;
