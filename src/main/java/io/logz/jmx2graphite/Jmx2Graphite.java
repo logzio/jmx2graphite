@@ -28,15 +28,10 @@ public class Jmx2Graphite {
     private final MBeanClient client;
 
     public Jmx2Graphite(Jmx2GraphiteConfiguration conf) {
-        this(conf, false);
-    }
-
-    public Jmx2Graphite(Jmx2GraphiteConfiguration conf, boolean runAsDaemon) {
         this.conf = conf;
 
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setNameFormat("Jmx2GraphiteSender-%d")
-                .setDaemon(runAsDaemon)
                 .build();
         this.taskScheduler = new ScheduledThreadPoolExecutor(1, threadFactory);
 
