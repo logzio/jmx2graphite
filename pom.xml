@@ -75,7 +75,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.33</version>
+            <version>1.7.35</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -97,7 +97,7 @@
         <dependency>
             <groupId>com.typesafe</groupId>
             <artifactId>config</artifactId>
-            <version>1.4.1</version>
+            <version>1.4.2</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
