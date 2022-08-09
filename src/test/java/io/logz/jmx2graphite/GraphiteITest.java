@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -131,9 +132,7 @@ public class GraphiteITest {
     }
 
 	private static File createTempDir() throws IOException {
-		final File tempFile = File.createTempFile("mytest", "");
-	    if (!tempFile.delete()) throw new RuntimeException("Failed deleting temporary directory ("+tempFile.getAbsolutePath()+") while creating a temp dir");
-	    if (!tempFile.mkdirs()) throw new RuntimeException("Failed creating temporary directory: "+tempFile.getAbsolutePath());;
+		final File tempFile = Files.createTempDirectory("mytest").toFile();;
 	    logger.info("Logging to {}", tempFile.getAbsolutePath());
 	    return tempFile;
 	}
