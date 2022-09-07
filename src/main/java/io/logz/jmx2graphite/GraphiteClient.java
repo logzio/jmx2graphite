@@ -15,23 +15,22 @@ import org.slf4j.LoggerFactory;
 import javax.net.SocketFactory;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.URLEncoder;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.List;
+import java.util.Locale;
 
 import static io.logz.jmx2graphite.GraphiteProtocol.TCP;
 import static io.logz.jmx2graphite.GraphiteProtocol.UDP;
 
 
 public class GraphiteClient implements Closeable {
+    private static final char UNDERSCORE = '_';
     private static final Logger logger = LoggerFactory.getLogger(GraphiteClient.class);
-    private static final String ENCODING = StandardCharsets.UTF_8.name();
     private GraphiteSender graphite;
     private String metricsPrefix;
     private int failuresAtLastWrite = 0;
@@ -70,19 +69,52 @@ public class GraphiteClient implements Closeable {
     }
 
     public static String sanitizeMetricName(String s, boolean keepDot) {
-        StringBuilder sb = new StringBuilder(s.length());
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
+        /*
+         * https://github.com/graphite-project/graphite-web/issues/243
+         * Unicode and some chars are not OK.
+         */
+        String normalized = Normalizer.normalize(s, Normalizer.Form.NFKD);
+
+        StringBuilder sb = new StringBuilder(normalized.length());
+
+        /*
+         * This list contains not allowed chars. They are either removed or replaced with underscore.
+         * https://github.com/graphite-project/graphite-web/blob/master/webapp/graphite/render/grammar_unsafe.py
+         */
+        for (int i = 0; i < normalized.length(); i++) {
+            char c = normalized.charAt(i);
             if (c == '=') {
-                sb.append('_');
+                sb.append(UNDERSCORE);
             } else if (c == ':') {
                 sb.append('.');
             } else if (c == ',') {
                 sb.append('.');
             } else if (c == '.' && !keepDot) {
-                sb.append('_');
+                sb.append(UNDERSCORE);
             } else if (c == '"') {
                 // Removing it
+            } else if (c == '\'') {
+                // Removing it
+            } else if (c == '{') {
+                sb.append(UNDERSCORE);
+            } else if (c == '}') {
+                sb.append(UNDERSCORE);
+            } else if (c == '(') {
+                sb.append(UNDERSCORE);
+            } else if (c == ')') {
+                sb.append(UNDERSCORE);
+            } else if (c == '|') {
+                sb.append(UNDERSCORE);
+            } else if (c == '[') {
+                sb.append(UNDERSCORE);
+            } else if (c == ']') {
+                sb.append(UNDERSCORE);
+            } else if (c == '?') {
+                sb.append(UNDERSCORE);
+            } else if (c == '\\') {
+                sb.append(UNDERSCORE);
+            } else if (c == '/') {
+                sb.append(UNDERSCORE);
             } else if (c == ' ') {
                 sb.append('-');
             } else {
@@ -90,12 +122,7 @@ public class GraphiteClient implements Closeable {
             }
         }
 
-        try {
-            return URLEncoder.encode(sb.toString(), ENCODING);
-        } catch (UnsupportedEncodingException e) {
-            logger.error("Unsupported encoding {} for metric name {}.", ENCODING, s);
-            return sb.toString();
-        }
+        return sb.toString();
     }
 
     /**
@@ -127,7 +154,7 @@ public class GraphiteClient implements Closeable {
         int failuresBefore = graphite.getFailures();
         for (MetricValue mv : metrics) {
             try {
-                graphite.send(metricsPrefix + mv.getName(), mv.getValue().toString(), mv.getTimestampSeconds());
+                graphite.send(metricsPrefix + mv.getName(), format(mv.getValue()), mv.getTimestampSeconds());
             } catch (Exception e) {
                 throw new GraphiteWriteFailed("Failed writing metric to graphite. Error = " + e.getMessage(), e);
             }
@@ -139,6 +166,35 @@ public class GraphiteClient implements Closeable {
         }
         failuresAtLastWrite = graphite.getFailures() - failuresBefore;
 
+    }
+
+    /**
+     * We need to make sure that the value is always in a format that graphite understands
+     * https://github.com/dropwizard/metrics/blob/1d57f2c7bc1e6d251ebb05502f0f67f49d38375f/metrics-graphite/src/main/java/com/codahale/metrics/graphite/GraphiteReporter.java#L483
+     */
+    private String format(Number o) {
+        if (o instanceof Float) {
+            return format(o.doubleValue());
+        } else if (o instanceof Double) {
+            return format(o.doubleValue());
+        } else if (o instanceof Byte) {
+            return format(o.longValue());
+        } else if (o instanceof Short) {
+            return format(o.longValue());
+        } else if (o instanceof Integer) {
+            return format(o.longValue());
+        } else if (o instanceof Long) {
+            return format(o.longValue());
+        }
+        return format(o.doubleValue());
+    }
+
+    private String format(long n) {
+        return Long.toString(n);
+    }
+
+    private String format(double v) {
+        return String.format(Locale.US, "%2.2f", v);
     }
 
     public int getFailedAtLastWrite() {
