@@ -97,7 +97,7 @@ public class GraphiteClientTest {
     public void testSanitizeMetricName() {
         String sanitizedMetricName = sanitizeMetricName("local,project com.zaxxer.hikari type_Pool:334|613-(HikariCP=reader-1).TotalConnections");
 
-        String expectedSanitizedMetricName = "local.project-com.zaxxer.hikari-type_Pool.334%7C613-%28HikariCP_reader-1%29.TotalConnections";
+        String expectedSanitizedMetricName = "local.project-com.zaxxer.hikari-type_Pool.334_613-_HikariCP_reader-1_.TotalConnections";
 
         assertEquals(sanitizedMetricName, expectedSanitizedMetricName);
     }
