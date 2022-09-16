@@ -40,20 +40,20 @@ public class GraphiteITest {
     private static Stopwatch beforeClassStopwatch;
     public static final String TEST_SERVICE_HOST = "testhost";
     public static final String TEST_SERVICE_NAME = "testservice";
-    private static File tempDir;
 
+    @SuppressWarnings({"resource", "unchecked"})
     @BeforeClass
     public static void beforeClass() throws IOException {
         beforeClassStopwatch = Stopwatch.createStarted();
-        tempDir = createTempDir();
+        File tempDir = createTempDir();
 
-        graphiteContainer = new GenericContainer("sitespeedio/graphite:0.9.14").withExposedPorts(2003, 80)
+        graphiteContainer = new GenericContainer<>("sitespeedio/graphite:1.0.2-2").withExposedPorts(2003, 80)
                 .withFileSystemBind(tempDir.getAbsolutePath(), "/var/log/carbon", BindMode.READ_WRITE)
                 .withClasspathResourceMapping("carbon.conf", "/opt/graphite/conf/carbon.conf", BindMode.READ_ONLY)
                 .withClasspathResourceMapping("blacklist.conf", "/opt/graphite/conf/blacklist.conf", BindMode.READ_ONLY)
                 .withClasspathResourceMapping("storage-schemas.conf", "/opt/graphite/conf/storage-schemas.conf",
                         BindMode.READ_ONLY)
-                .waitingFor(new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(10)))
+                .waitingFor(new HostPortWaitStrategy().withStartupTimeout(Duration.ofSeconds(30)))
                 .withLogConsumer(new Slf4jLogConsumer(logger).withPrefix("graphite"));
 
         graphiteContainer.setPortBindings(Lists.newArrayList("2003:2003", "1180:80"));
@@ -69,46 +69,46 @@ public class GraphiteITest {
     }
 
     @Test
-    public void testResilienceToGraphiteRestart() {
-        GraphiteClient graphite = createGraphiteClient();
+    public void testResilienceToGraphiteRestart() throws IOException {
+        try (GraphiteClient graphite = createGraphiteClient()) {
+            ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC")).truncatedTo(MINUTES);
+            String metricName = "numOfLogz";
+            float value = 100.0f;
+            graphite.sendMetrics(metricsListOf(metricName, value, now.toEpochSecond()));
+            assertThat(graphite.getFailedAtLastWrite()).isEqualTo(0);
 
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC")).truncatedTo(MINUTES);
-        String metricName = "numOfLogz";
-        float value = 100.0f;
-        graphite.sendMetrics(metricsListOf(metricName, value, now.toEpochSecond()));
-        assertThat(graphite.getFailedAtLastWrite()).isEqualTo(0);
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            String fullMetricPath = String.format("%s.%s.%s", TEST_SERVICE_NAME, TEST_SERVICE_HOST, metricName);
 
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        String fullMetricPath = String.format("%s.%s.%s", TEST_SERVICE_NAME, TEST_SERVICE_HOST, metricName);
+            await().atMost(10, TimeUnit.SECONDS).until(() -> {
+                String result = queryGraphiteAsCsv(fullMetricPath);
+                assertThat(result).contains(fullMetricPath + "," + dateTimeFormatter.format(now) + "," + value);
+            });
 
-        await().atMost(10, TimeUnit.SECONDS).until(() -> {
-            String result = queryGraphiteAsCsv(fullMetricPath);
-            assertThat(result).contains(fullMetricPath + "," + dateTimeFormatter.format(now) + "," + value);
-        });
+            graphiteContainer.stop();
 
-        graphiteContainer.stop();
+            await().atMost(10, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS)
+                    .until(() -> assertThatThrownBy(
+                            () -> graphite.sendMetrics(metricsListOf(metricName, value, now.toEpochSecond())))
+                            .isInstanceOf(GraphiteClient.GraphiteWriteFailed.class)
+                            .hasMessageContaining("Connection refused"));
 
-        await().atMost(10, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS)
-                .until(() -> assertThatThrownBy(
-                        () -> graphite.sendMetrics(metricsListOf(metricName, value, now.toEpochSecond())))
-                                .isInstanceOf(GraphiteClient.GraphiteWriteFailed.class)
-                                .hasMessageContaining("Connection refused"));
+            graphiteContainer.start();
 
-        graphiteContainer.start();
+            await().atMost(10, TimeUnit.SECONDS).ignoreExceptionsInstanceOf(ConnectException.class)
+                    .until(() -> queryGraphiteAsCsv(fullMetricPath) != null);
 
-        await().atMost(10, TimeUnit.SECONDS).ignoreExceptionsInstanceOf(ConnectException.class)
-                .until(() -> queryGraphiteAsCsv(fullMetricPath) != null);
+            String metricName2 = "numOfLogz2";
 
-        String metricName2 = "numOfLogz2";
+            graphite.sendMetrics(metricsListOf(metricName2, value, now.toEpochSecond()));
+            assertThat(graphite.getFailedAtLastWrite()).isEqualTo(0);
 
-        graphite.sendMetrics(metricsListOf(metricName2, value, now.toEpochSecond()));
-        assertThat(graphite.getFailedAtLastWrite()).isEqualTo(0);
-
-        String fullMetricPath2 = String.format("%s.%s.%s", TEST_SERVICE_NAME, TEST_SERVICE_HOST, metricName2);
-        await().atMost(10, TimeUnit.SECONDS).until(() -> {
-            String result2 = queryGraphiteAsCsv(fullMetricPath2);
-            assertThat(result2).contains(fullMetricPath2 + "," + dateTimeFormatter.format(now) + "," + value);
-        });
+            String fullMetricPath2 = String.format("%s.%s.%s", TEST_SERVICE_NAME, TEST_SERVICE_HOST, metricName2);
+            await().atMost(10, TimeUnit.SECONDS).until(() -> {
+                String result2 = queryGraphiteAsCsv(fullMetricPath2);
+                assertThat(result2).contains(fullMetricPath2 + "," + dateTimeFormatter.format(now) + "," + value);
+            });
+        }
     }
 
     private String queryGraphiteAsCsv(String fullMetricPath) {
@@ -132,7 +132,7 @@ public class GraphiteITest {
     }
 
 	private static File createTempDir() throws IOException {
-		final File tempFile = Files.createTempDirectory("mytest").toFile();;
+		final File tempFile = Files.createTempDirectory("mytest").toFile();
 	    logger.info("Logging to {}", tempFile.getAbsolutePath());
 	    return tempFile;
 	}
